@@ -1,0 +1,1922 @@
+{
+ "note": {
+  "note_id": 6,
+  "rel_path": "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md",
+  "title": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms）",
+  "course": "CMU15445_Final",
+  "course_code": "15-445",
+  "lecture_no": 11,
+  "kind": "lecture",
+  "agent": "Astra",
+  "zh_title": "排序与聚合算法",
+  "en_title": "Sorting And Aggregations Algorithms",
+  "has_frontmatter": 0,
+  "char_count": 40853,
+  "ingested_at": "2026-10-28T03:16:41",
+  "chunk_count": 58,
+  "seq_min": 1,
+  "seq_max": 58,
+  "links_out": 40,
+  "links_out_valid": 40,
+  "links_in": 67,
+  "glossary_count": 59
+ },
+ "chunks": [
+  {
+   "chunk_id": 612,
+   "seq": 1,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms）",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 413,
+   "content": "> **课程**：CMU 15-445/645 Database Systems（Fall 2025）· **主讲**：Andy Pavlo  \n> **课程主页**：[CMU 15-445/645 · Fall 2025](https://15445.courses.cs.cmu.edu/fall2025/)  \n> **材料**：课件 `11-sorting.pdf`、官方 Lecture Notes `N11-sorting.pdf`、课堂录音转写稿  \n> **说明**：正文以 PPT 与 Lecture Notes 为准。讲者原话的中文为意译，英文见脚注，依据转写稿整理并修正明显的语音识别错误。文中“📍 PPT 第 X 页”指幻灯片右上角印的编号，动画分步共用编号。唯一的编号例外是 108 页排序例题：它位于第 16 与第 18 页之间，却误印为 36；下文称第 17 页，对应 PDF 文件第 36 页。"
+  },
+  {
+   "chunk_id": 613,
+   "seq": 2,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 摘要（Abstract）",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 551,
+   "content": "排序与聚合把[数据库](#数据库)的[页](#页)和记录组织成查询结果。它们面对的限制是：待处理数据、中间结果乃至最终结果，都可能超过可用内存。因此，算法不仅要减少比较或查找次数，还要明确哪些状态留在内存、哪些数据写到磁盘，以及怎样尽量连续地读写这些数据。\n\n只取少量最优记录时，Top-N 堆可以在一遍扫描中维护有限候选。需要完整排序时，[外部归并排序](#外部归并排序)先生成内存能够处理的有序[归并段](#归并段)，再逐[趟](#趟)合并；更多缓冲[页](#页)能够减少归并[趟](#趟)数，[双缓冲](#双缓冲)则让计算与 I/O 重叠。已有的 [B+ 树](#B+%20树)有时可以直接提供所需顺序，但是否划算，还取决于取回[元组](#元组)时的数据[访问路径](#访问路径)。\n\n聚合进一步揭示了排序的价值：同组记录相邻以后，只需顺序维护一个摘要。如果只关心键是否相同，[哈希表](#哈希表)可以直接定位各组状态；状态放不下时，再通过磁盘[分区](#分区)把工作拆开。沿着这条路线，可以推导外部排序的[页](#页) I/O 代价，解释 `WITH TIES` 为什么可能突破内存预期，并根据输入顺序、组数和输出要求，判断[排序聚合](#排序聚合)与[哈希聚合](#哈希聚合)各自适合的条件。"
+  },
+  {
+   "chunk_id": 614,
+   "seq": 3,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 课程地图",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 546,
+   "content": "从第 [11](../L11%20Astra%20排序与聚合算法%20MotherDuck%20数据库讲座%20Sorting%20and%20Aggregation%20Algorithms%20MotherDuck%20Database%20Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md) 讲开始，课程进入查询处理阶段：把已经能够读写的[页](#页)、已经能够查找的记录，组合成能够执行 SQL 的系统。\n![PPT 第 3 页](slides/page-03.png)\n\n\n```mermaid\nflowchart LR\n    A[\"一、基础与查询语言<br/>#01–#02\"] --> B[\"二、存储<br/>#03–#06\"]\n    B --> C[\"三、访问方法<br/>#07–#10\"]\n    C --> D[\"四、查询处理<br/>#11–#16<br/>★ 本讲 #11\"]\n    D --> E[\"五、并发控制<br/>#17–#20\"]\n    E --> F[\"六、日志与恢复<br/>#21–#22\"]\n    F --> G[\"七、分布式<br/>#23–#24\"]\n```"
+  },
+  {
+   "chunk_id": 615,
+   "seq": 4,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 课程地图 (part 2)",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 799,
+   "content": "--> E[\"五、并发控制<br/>#17–#20\"]\n    E --> F[\"六、日志与恢复<br/>#21–#22\"]\n    F --> G[\"七、分布式<br/>#23–#24\"]\n```\n\n第 [1](../L1%20Opus%20关系模型与关系代数%20Relational%20Model%20and%20Algebra/1%2015-445-lecture-01-relational-model-and-algebra.md)、[2](../L2%20Opus%20现代%20SQL%20dbt%20数据库讲座%20Modern%20SQL%20dbt%20Database%20Talk/15-445-lecture-02-modern-sql.md) 讲给出了关系运算和 SQL 的语义；第 [3](../L3%20Opus%20数据库存储%20文件%20页%20元组%20Database%20Storage%20Files%20Pages%20Tuples/15-445-lecture-03-database-storage-i.md)、[4](../L4%20Opus%20内存管理与缓冲池%20Memory%20Management%20and%20Buffer%20Pools/15-445-lecture-04-memory-management.md) 讲说明了[页](#页)与[缓冲池](#缓冲池)如何让数据在内存和磁盘之间移动；第 [6](../L6%20Opus%20列存数据库%20Column%20Store%20Databases/15-445-lecture-06-storage-models-and-compression.md) 讲的行存储、列存储决定了排序时需要搬动多少数据；第 [7](../L7%20Opus%20数据库哈希表%20"
+  },
+  {
+   "chunk_id": 616,
+   "seq": 5,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 课程地图 (part 3)",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 1098,
+   "content": "lecture-06-storage-models-and-compression.md) 讲的行存储、列存储决定了排序时需要搬动多少数据；第 [7](../L7%20Opus%20数据库哈希表%20YugabyteDB%20数据库讲座%20Database%20Hash%20Tables%20YugabyteDB%20Database%20Talk/15-445-lecture-07-hash-tables.md) 讲的[哈希表](#哈希表)和第 [8](../L8%20Astra%20B%2B树%20世界上最好的数据结构%20B%2BTrees%20The%20Best%20Data%20Structure%20in%20the%20World/15-445-lecture-08-indexes-and-filters-i.md)、[9](../L9%20Opus%20向量索引%20倒排索引%20跳表%20布隆过滤器%20Vector%20Indexes%20Inverted%20Indexes%20Skip%20Lists%20Bloom%20Filters/15-445-lecture-09-indexes-and-filters-ii.md) 讲的 [B+ 树](#B+%20树)，现在都要成为执行查询的工具。第 [5](../L5%20Opus%20日志结构存储%20SingleStore%20数据库讲座%20Log%20Structured%20Database%20Storage%20SingleStore%20Database%20Talk/15-445-lecture-05-database-storage-ii.md) 讲 [LSM 树](#LSM%20树)的后台压实、第 [8](../L8%20Astra%20B%2B树%20世界上最好的数据结构%20B%2BTrees%20The%20Best%20Data%20Structure%20in%20the%20World/15-445-lecture-08-indexes-and-filters-i.md) 讲 B+ 树的[分裂](#分裂)合并，用的都是本讲要系统展开的归并；第 [10](../L10%20Astra%20数据结构中的闩锁%20Latching%20in%20Data%20Structures/15-445-lecture-10-index-concurrency-control.md) 讲的[闩](#闩)协议则保证多个线程访问同一结构时的[物理正确性](#物理正确性)。"
+  },
+  {
+   "chunk_id": 617,
+   "seq": 6,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 课程地图 (part 4)",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 858,
+   "content": "tructures/15-445-lecture-10-index-concurrency-control.md) 讲的[闩](#闩)协议则保证多个线程访问同一结构时的[物理正确性](#物理正确性)。\n\n排序与哈希这两条组织数据的路线会延续到第 [12](../L12%20Astra%20哈希连接%20排序合并连接%20嵌套循环连接%20Hash%20Joins%20Sort%20Merge%20Joins%20Nested%20Loop%20Join%20Algorithms/15-445-lecture-12-joins-algorithms.md) 讲的[连接](#连接)算法。第 [13](../L13%20Opus%20查询执行%20上%20Query%20Execution%20Part%201/15-445-lecture-13-query-execution-i.md)、[14](../L14%20Opus%20并行查询引擎架构%20SpiralDB%20数据库讲座%20Parallel%20Query%20Engine%20Architectures%20SpiralDB%20Database%20Talk/15-445-lecture-14-query-execution-ii.md) 讲将把这些算法接入完整的执行框架，第 [15](../L15%20Opus%20查询优化器%20上%20Database%20Query%20Optimizers%20Part%201/15-445-lecture-15-query-planning-and-optimization-i.md)、[16](../L16%20Astra%20查询优化%20下%20Query%20Optimization%20Part%202/15-445-lecture-16-query-planning-and-optimization-ii.md) 讲再研究如何根据数据规模、分布和代价为查询选择方案。"
+  },
+  {
+   "chunk_id": 618,
+   "seq": 7,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 1. 查询开始执行之后，内存问题又出现了 > 1.1 查询计划把关系运算变成数据流",
+   "page_start": 3,
+   "page_end": 4,
+   "char_count": 516,
+   "content": "[索引](#索引)能够回答“这条记录在哪里”，SQL 往往还要回答“哪些记录应该组合、哪些值应该汇总、结果应该怎样排列”。这些工作由**[查询计划](#查询计划)（Query Plan）**组织起来：它是由[算子](#算子)及其数据依赖关系构成的树，或者有向无环图（Directed Acyclic Graph，DAG）。**[算子](#算子)（Operator）**是完成一种具体数据处理工作的节点，例如扫描、过滤、[连接](#连接)、排序或聚合。\n\n考虑下面的查询：\n\n```sql\nSELECT R.id, S.cdate\n  FROM R JOIN S\n    ON R.id = S.id\n WHERE S.value > 100;\n```\n\n一种执行安排是先过滤 `S`，再[连接](#连接)两张表，最后只留下需要的列：\n\n```mermaid\nflowchart BT\n    R[\"扫描 R\"] --> J[\"连接：R.id = S.id\"]\n    S[\"扫描 S\"] --> F[\"过滤：S.value > 100\"]\n    F --> J\n    J --> P[\"投影：R.id、S.cdate\"]\n```"
+  },
+  {
+   "chunk_id": 619,
+   "seq": 8,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 1. 查询开始执行之后，内存问题又出现了 > 1.1 查询计划把关系运算变成数据流 (part 2)",
+   "page_start": 3,
+   "page_end": 4,
+   "char_count": 691,
+   "content": "R.id = S.id\"]\n    S[\"扫描 S\"] --> F[\"过滤：S.value > 100\"]\n    F --> J\n    J --> P[\"投影：R.id、S.cdate\"]\n```\n\n这里沿用第 [1](../L1%20Opus%20关系模型与关系代数%20Relational%20Model%20and%20Algebra/1%2015-445-lecture-01-relational-model-and-algebra.md) 讲的[关系代数](#关系代数)：过滤对应选择，留下列对应[投影](#投影)。数据从叶子流向根，根节点的输出就是查询结果。图上的一条边可能传递一条[元组](#元组)、一批元组，或者一组列；控制流程也可以由上层索取数据，或者由下层主动推送。数据依赖关系已经确定，传递方式留到第 [13](../L13%20Opus%20查询执行%20上%20Query%20Execution%20Part%201/15-445-lecture-13-query-execution-i.md)、[14](../L14%20Opus%20并行查询引擎架构%20SpiralDB%20数据库讲座%20Parallel%20Query%20Engine%20Architectures%20SpiralDB%20Database%20Talk/15-445-lecture-14-query-execution-ii.md) 讲再选择。\n\n树是最容易理解的形式。DAG 还允许几个上层节点共享同一个下层结果，因此不必把每份重复计算都复制成独立子树。"
+  },
+  {
+   "chunk_id": 620,
+   "seq": 9,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 1. 查询开始执行之后，内存问题又出现了 > 1.2 放不下的可能是中间结果",
+   "page_start": 5,
+   "page_end": 5,
+   "char_count": 741,
+   "content": "第 [4](../L4%20Opus%20内存管理与缓冲池%20Memory%20Management%20and%20Buffer%20Pools/15-445-lecture-04-memory-management.md) 讲的[缓冲池](#缓冲池)（Buffer Pool）用有限的内存[帧](#帧)缓存磁盘[页](#页)，让一张大表可以逐页读取。执行查询时，同样的限制会再次出现：[连接](#连接)可能产生大量中间记录，排序可能需要保存全部候选记录，最终结果也可能比内存更大。即使原表能够放下，中间结果也未必能够放下。\n\n当工作数据超过内存预算，系统需要把暂时不用的数据写到临时磁盘文件，稍后再读回来，这叫**[溢写](#溢写)（Spill）**。**[外部算法](#外部算法)（External Algorithm）**就是能够在数据超过内存时继续工作，并把外存访问代价纳入设计的算法。“外部”指使用内存之外的存储，不表示交给另一个程序执行。\n\n这时，单看比较次数已经不够。顺序 I/O 沿着一段数据连续读写，可以合并成较大的请求；随机 I/O 则不断跳到不同位置，通常更难充分利用存储带宽。机械硬盘有寻道开销，SSD 虽然没有机械寻道，也仍然受请求大小、并发程度和访问模式影响。一个少做几次比较、却让系统频繁随机读盘的算法，可能比多做比较但顺序访问的算法慢得多。\n\n[数据库](#数据库)知道某个[算子](#算子)接下来要读哪一段数据，也知道哪些中间结果以后还会使用。这些信息足以指导它安排预取、保留内存[页](#页)和释放临时文件。操作系统只看到内存访问，难以直接利用[查询计划](#查询计划)的语义。因此，数据库需要主动管理算法的工作内存和[溢写](#溢写)过程。"
+  },
+  {
+   "chunk_id": 621,
+   "seq": 10,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 2. 排序的用途，以及真正被搬动的数据 > 2.1 有序性既是结果要求，也是一种可利用的性质",
+   "page_start": 6,
+   "page_end": 9,
+   "char_count": 732,
+   "content": "[关系模型](#关系模型)中的关系没有顺序，SQL 的包语义也没有给行规定默认顺序。用户写下 `ORDER BY`，才给结果增加了一个明确要求。但[数据库](#数据库)有时会主动排序，因为有序性可以让下一步工作变得简单。\n\n`DISTINCT` 是最直接的例子。相同值排在一起以后，[去重](#去重)只需要记住上一项，遇到重复项就跳过。`GROUP BY` 可以利用同样的邻接关系，把一组记录连续汇总；第 [12](../L12%20Astra%20哈希连接%20排序合并连接%20嵌套循环连接%20Hash%20Joins%20Sort%20Merge%20Joins%20Nested%20Loop%20Join%20Algorithms/15-445-lecture-12-joins-algorithms.md) 讲的排序归并连接也会利用两路有序输入。批量建立 [B+ 树](#B+%20树)时，已排序的记录可以按序填充[叶节点](#叶节点)，再构造上层[索引](#索引)，省去大量逐条插入和节点调整。\n\n这种[索引](#索引)甚至可能只服务于一次查询。SQL Server 的 Index Spool 会把输入行复制到查询期间存在的临时存储，并为它们建立索引。它说明执行器有时值得先付出组织数据的代价，以便后续反复查找更快；具体是否先排序，是相应实现的选择。[Microsoft 算子文档](https://learn.microsoft.com/en-us/sql/relational-databases/showplan-logical-and-physical-operators-reference?view=sql-server-ver16)"
+  },
+  {
+   "chunk_id": 622,
+   "seq": 11,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 2. 排序的用途，以及真正被搬动的数据 > 2.1 有序性既是结果要求，也是一种可利用的性质 (part 2)",
+   "page_start": 6,
+   "page_end": 9,
+   "char_count": 307,
+   "content": "us/sql/relational-databases/showplan-logical-and-physical-operators-reference?view=sql-server-ver16)\n\n如果全部待排序数据和算法所需的额外空间都能放进工作内存，可以使用快速排序（QuickSort）、TimSort 或适合键类型的[基数](#基数)排序（RadixSort）等内存算法。接近有序的数据还可以交给能识别已有顺序的算法，例如 VergeSort。困难始于数据需要反复进出磁盘：算法必须安排好每一批数据的读写，才能让有限内存支撑完整排序。\n![PPT 第 7 页](slides/page-07.png)"
+  },
+  {
+   "chunk_id": 623,
+   "seq": 12,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 2. 排序的用途，以及真正被搬动的数据 > 2.2 排序键之外，还必须保留记录的身份",
+   "page_start": 8,
+   "page_end": 8,
+   "char_count": 712,
+   "content": "**[排序键](#排序键)（Sort Key）**是决定先后次序的一列或多列[属性](#属性)值。它不必是[主键](#主键)，也不要求唯一。例如 `ORDER BY grade, sid` 先比较成绩，成绩相同再比较学生编号；升降序、空值位置和字符串比较规则也属于排序条件。\n\n排序处理的是键值对：键负责比较，值负责把排好序的键与原记录联系起来。只留下 `sid` 数字而丢掉其余信息，即使顺序排对了，也无法回答 `SELECT *` 应该返回哪条记录。\n\n有两种典型表示：\n![PPT 第 8 页](slides/page-08.png)\n\n\n```text\nEarly Materialization\n[ K1 | <Tuple Data> ]\n[ K2 | <Tuple Data> ]\n...\n\nLate Materialization\n[ K1 | Record ID / Offset ]\n[ K2 | Record ID / Offset ]\n...\n```\n\n**[早期物化](#早期物化)（Early Materialization）**在较早阶段就把[元组](#元组)数据放进中间记录，让它随[排序键](#排序键)一起移动。行存储（Row Store，见第 [6](../L6%20Opus%20列存数据库%20Column%20Store%20Databases/15-445-lecture-06-storage-models-and-compression.md) 讲）读入一个记录所在的[页](#页)时，通常已经取得该行的多个[属性](#属性)；把需要的数据一起带走，可以避免稍后再次定位原记录。"
+  },
+  {
+   "chunk_id": 624,
+   "seq": 13,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 2. 排序的用途，以及真正被搬动的数据 > 2.2 排序键之外，还必须保留记录的身份 (part 2)",
+   "page_start": 8,
+   "page_end": 8,
+   "char_count": 747,
+   "content": "torage-models-and-compression.md) 讲）读入一个记录所在的[页](#页)时，通常已经取得该行的多个[属性](#属性)；把需要的数据一起带走，可以避免稍后再次定位原记录。\n\n**[延迟物化](#延迟物化)（Late Materialization）**先携带[排序键](#排序键)和[记录 ID](#记录%20ID) 或位置，等确实需要其他[属性](#属性)时再读取、组合完整结果。列存储（Column Store，见第 [6](../L6%20Opus%20列存数据库%20Column%20Store%20Databases/15-445-lecture-06-storage-models-and-compression.md) 讲）可以只读排序需要的列，如果最终只保留少量行，许多大字段从始至终都不必进入排序过程。\n\n这相当于在 C 里选择排序一组较大的 `struct`，还是排序一组“键加记录位置”。前者搬动的字节多，后者以后可能还要回到原位置取数据。[记录 ID](#记录%20ID) 是定位记录的标识，不一定是可以直接解引用的内存指针；磁盘[页](#页)换入换出以后，普通内存地址可能已经失效。\n\n两种方式的得失取决于记录宽度、最后保留多少行，以及稍后取回其余列要花多少代价。ClickHouse 的[延迟物化](#延迟物化)就是一个实际例子：对于排序后取少量行的查询，它可以先确定哪些行入选，再读取那些行的大文本列。[ClickHouse 延迟物化说明](https://clickhouse.com/blog/clickhouse-gets-lazier-and-faster-introducing-lazy-materialization)"
+  },
+  {
+   "chunk_id": 625,
+   "seq": 14,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 2. 排序的用途，以及真正被搬动的数据 > 2.2 排序键之外，还必须保留记录的身份 (part 3)",
+   "page_start": 8,
+   "page_end": 8,
+   "char_count": 197,
+   "content": "化说明](https://clickhouse.com/blog/clickhouse-gets-lazier-and-faster-introducing-lazy-materialization)\n\n这个选择还会改变外部排序的规模。同样 1 亿条记录，如果每条中间记录从整行缩小为“键加 ID”，需要排序的[页](#页)数就可能大幅下降。后面的 I/O 公式所计算的，正是这些参与排序的页。"
+  },
+  {
+   "chunk_id": 626,
+   "seq": 15,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 3. 只要前几条结果，先限制候选集合 > 3.1 Top-N 堆排序（Top-N Heap Sort）",
+   "page_start": 10,
+   "page_end": 10,
+   "char_count": 790,
+   "content": "如果查询只要求按某个顺序取前几条记录，把其余所有记录也排出完整次序，往往没有必要。**[Top-N 堆排序](#Top-N%20堆排序)（Top-N Heap Sort）**在扫描输入的过程中维护当前最好的若干条候选记录，扫描结束后只整理这些候选记录的输出顺序。\n\n为避免与后文的[页](#页)数混淆，这里把“前 N 条”的数量记作 `K`，把输入记录数记作 `M`。\n\n先考虑升序取最小的 `K` 条，暂时不保留额外并列项。可以用一个大小至多为 `K` 的最大堆：堆顶是候选集合中最大的键，也是最容易被淘汰的候选。堆未满时加入新记录；堆满后，只有比堆顶更小的记录才需要替换堆顶。更大的记录立即被丢弃。降序取最大的 `K` 条时，对应使用最小堆，把最小的候选放在堆顶。\n\n支撑这个算法的是一个始终成立的性质：**处理完输入的任何一个前缀后，堆里保存的都是这个前缀中最好的至多 `K` 条记录**；尚未读到 `K` 条时全部保留。如果新记录比当前最差的候选还差，已有 `K` 条记录排在它前面，它以后也不可能进入最终的前 `K` 条。\n\n堆只保证父子节点之间的局部关系，不保证整个数组已经有序。因此，维护候选集合之后，还要用堆操作或一次小规模排序，按 `ORDER BY` 要求输出这些候选。把候选画成有序列表便于观察，但实现时不需要为每次插入移动整个列表。\n\n在 `2 ≤ K ≤ M`、比较一次键按常数时间计算时，典型代价为：\n\n```math\nT = O(M\\log K + K\\log K), \\qquad S = O(K).\n```\n\n`T` 是 CPU 时间，`S` 是候选集合占用的记录数级别的空间。扫描输入本身是线性的，但更新堆有额外开销，所以“一遍扫描”并不等于整个算法只做 `O(M)` 次基本操作。若 `K = 1`，只需维护当前最优值，时间为 `O(M)`。"
+  },
+  {
+   "chunk_id": 627,
+   "seq": 16,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 3. 只要前几条结果，先限制候选集合 > 3.1 Top-N 堆排序（Top-N Heap Sort） (part 2)",
+   "page_start": 10,
+   "page_end": 10,
+   "char_count": 158,
+   "content": "候选集合占用的记录数级别的空间。扫描输入本身是线性的，但更新堆有额外开销，所以“一遍扫描”并不等于整个算法只做 `O(M)` 次基本操作。若 `K = 1`，只需维护当前最优值，时间为 `O(M)`。\n\n这个方法节省的是排序工作和候选空间。对于一般的无序输入，仍须看完所有记录：最后一条也可能比当前堆里的每一条都好。"
+  },
+  {
+   "chunk_id": 628,
+   "seq": 17,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 3. 只要前几条结果，先限制候选集合 > 3.2 WITH TIES 让结果条数超过限制",
+   "page_start": 10,
+   "page_end": 10,
+   "char_count": 774,
+   "content": "下面是课件使用的查询：\n\n```sql\nSELECT * FROM enrolled\n ORDER BY sid ASC\n FETCH FIRST 4 ROWS\n  WITH TIES;\n```\n\n`WITH TIES` 要求保留与第 4 条结果在[排序键](#排序键)上并列的其他记录。它并不是寻找 4 种不同的 `sid`，而是先按行找到第 4 个位置，再把这个边界上的并列记录全部纳入。多个排序列共同构成[排序键](#排序键)时，并列也按这些列共同判断。[PostgreSQL 的 FETCH 语义](https://www.postgresql.org/docs/17/sql-select.html#SQL-LIMIT)\n\n输入键依次是 `3, 4, 6, 2, 9, 1, 4, 4, 8`。下面把候选按序列出，用来观察保留了谁，不表示实际堆数组的布局：\n\n| 新读到的键 | 处理后的候选 | 发生了什么 |\n|---|---|---|\n| 3 | `3` | 候选未满，加入 |\n| 4 | `3, 4` | 加入 |\n| 6 | `3, 4, 6` | 加入 |\n| 2 | `2, 3, 4, 6` | 前 4 条的边界为 6 |\n| 9 | `2, 3, 4, 6` | 9 超过边界，跳过 |\n| 1 | `1, 2, 3, 4` | 淘汰 6，边界降到 4 |\n| 4 | `1, 2, 3, 4, 4` | 与边界并列，保留 |\n| 4 | `1, 2, 3, 4, 4, 4` | 继续保留并列项 |\n| 8 | `1, 2, 3, 4, 4, 4` | 8 超过边界，跳过 |\n\n最终返回 6 行。如果没有 `WITH TIES`，只返回前 4 行；边界上键值相同的几条记录选哪一条，则需要额外排序条件才能明确区分。"
+  },
+  {
+   "chunk_id": 629,
+   "seq": 18,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 3. 只要前几条结果，先限制候选集合 > 3.2 WITH TIES 让结果条数超过限制 (part 2)",
+   "page_start": 10,
+   "page_end": 10,
+   "char_count": 212,
+   "content": ", 2, 3, 4, 4, 4` | 8 超过边界，跳过 |\n\n最终返回 6 行。如果没有 `WITH TIES`，只返回前 4 行；边界上键值相同的几条记录选哪一条，则需要额外排序条件才能明确区分。\n\n随着更小的键出现，候选的边界还可能继续下降。此时，先前为了旧边界保留的额外并列项，也要随旧边界一起被淘汰。因此，保留并列项的实现需要同时维护第 `K` 个位置的边界和对应的额外记录，不能把所有曾经出现过的并列项永久留下。"
+  },
+  {
+   "chunk_id": 630,
+   "seq": 19,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 3. 只要前几条结果，先限制候选集合 > 3.3 要放进内存的是候选集合",
+   "page_start": 10,
+   "page_end": 10,
+   "char_count": 548,
+   "content": "Andy 对这里的内存要求强调得很直接：“原始数据不必放得进内存，但我希望候选堆放在内存里。”[^topn-memory] 原表可以逐[页](#页)扫描，处理完的输入页由[缓冲池](#缓冲池)回收；需要长期保留的是候选记录及其管理结构。\n\n普通 Top-N 的候选数量最多为 `K`，`WITH TIES` 却可能让它远远超过 `K`。如果所有行的[排序键](#排序键)都相同，保留并列项的查询可能返回整张表。系统可以根据行宽、不同值数量和频率分布估计空间，但统计信息是摘要，中间结果也常常要执行以后才知道真实大小。保留余量只能降低估计失误的影响，不能代替运行时的内存限制和[溢写](#溢写)处理。\n\n“能放进内存”还要相对于当前[算子](#算子)的预算来判断。机器上的其他查询、同一查询里的其他排序与哈希操作，也在使用内存。例如 PostgreSQL 的 `work_mem` 是排序、哈希等操作的基础工作内存额度，并非整条查询共同使用的一笔固定总额；一条复杂查询和多个并发会话可能同时使用多份额度。[PostgreSQL 工作内存说明](https://www.postgresql.org/docs/17/runtime-config-resource.html#GUC-WORK-MEM)"
+  },
+  {
+   "chunk_id": 631,
+   "seq": 20,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 3. 只要前几条结果，先限制候选集合 > 3.3 要放进内存的是候选集合 (part 2)",
+   "page_start": 10,
+   "page_end": 10,
+   "char_count": 454,
+   "content": "额度。[PostgreSQL 工作内存说明](https://www.postgresql.org/docs/17/runtime-config-resource.html#GUC-WORK-MEM)\n\n第 [15](../L15%20Opus%20查询优化器%20上%20Database%20Query%20Optimizers%20Part%201/15-445-lecture-15-query-planning-and-optimization-i.md)、[16](../L16%20Astra%20查询优化%20下%20Query%20Optimization%20Part%202/15-445-lecture-16-query-planning-and-optimization-ii.md) 讲会展开这些估计。现在先记住一个选择条件：当候选集合很小，Top-N 堆可以让巨大的输入只留下很小的排序状态；当候选本身已经很大，或者要求完整有序结果，就需要能够[溢写](#溢写)的通用排序方法。"
+  },
+  {
+   "chunk_id": 632,
+   "seq": 21,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 4. 外部归并排序：让有序片段逐步接起来 > 4.1 归并段在磁盘上增长，内存窗口保持有限",
+   "page_start": 11,
+   "page_end": 13,
+   "char_count": 677,
+   "content": "如果全部数据放不进内存，仍然可以让一小部分数据排好序。然后利用这些小部分内部已有的顺序，把它们组合成更长的有序序列。**[外部归并排序](#外部归并排序)（External Merge Sort）**就沿着这条路线工作：先生成有序片段，再反复归并，直到全部数据成为一个有序序列。\n\n**[归并段](#归并段)（Run）**是一段待处理的记录序列；下面提到的“有序[归并段](#归并段)”，指其中所有记录按同一[排序规则](#排序规则)排列。它可以包含一[页](#页)，也可以包含很多页。一个有序[归并段](#归并段)要求跨页也有序，不能只有每一页内部各自有序。\n\n算法有两个阶段。生成初始[归并段](#归并段)时，读入能放进内存的一批数据，用内存排序算法排好，再写入临时文件。归并阶段把若干个有序[归并段](#归并段)合成更长的有序[归并段](#归并段)，需要时重复这一阶段。排序生成的是供查询使用的临时结果，并不要求把原表在磁盘上的记录重新排列。\n\n**[趟](#趟)（Pass）**是对这一层全部数据的一次完整处理。初始排序称为第 0 [趟](#趟)，随后的归并依次称为第 1、2、3 [趟](#趟)。一个阶段可能包含多[趟](#趟)；一[趟](#趟)中也可能分别归并好几组[归并段](#归并段)。\n\n先看最简单的二路归并。“二路”指每次合并 2 个[归并段](#归并段)。内存只需准备 3 个[页](#页)框：\n![PPT 第 12 页](slides/page-24.png)\n\n![PPT 第 13 页](slides/page-25.png)"
+  },
+  {
+   "chunk_id": 633,
+   "seq": 22,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 4. 外部归并排序：让有序片段逐步接起来 > 4.1 归并段在磁盘上增长，内存窗口保持有限 (part 2)",
+   "page_start": 11,
+   "page_end": 13,
+   "char_count": 720,
+   "content": "[归并段](#归并段)。内存只需准备 3 个[页](#页)框：\n![PPT 第 12 页](slides/page-24.png)\n\n![PPT 第 13 页](slides/page-25.png)\n\n\n```text\nDisk: sorted run A  ---> [ current input page A ] ---+\n                                                     +---> [ output page ] ---> Disk: new run\nDisk: sorted run B  ---> [ current input page B ] ---+\n```\n\n每个输入[归并段](#归并段)只把当前正在读的一[页](#页)放进内存。比较两侧尚未输出的第一个键，取较小者写入输出页，然后只推进被选中那一侧的游标。输入页用完了，就用该[归并段](#归并段)的下一页替换；输出页写满了，就把它写到新[归并段](#归并段)，再复用这个输出页框。\n\n这正是归并能够处理巨大文件的原因：两侧内部已经有序，当前头部之后的记录都不会更小，所以只比较两个头部就足以决定下一条输出。不必把两个[归并段](#归并段)全部装入内存，也不必回头检查已经输出的部分。如果一个[归并段](#归并段)先结束，把另一侧剩余记录继续按序输出即可。\n\n[页](#页)框里必须能够取得真正的[排序键](#排序键)。[记录 ID](#记录%20ID) 或偏移可以帮助定位其他字段，却不能单靠它们判断两个尚未读取的键谁大谁小。[延迟物化](#延迟物化)节省的是随键携带的其他字段，不会免去比较所需的键值。"
+  },
+  {
+   "chunk_id": 634,
+   "seq": 23,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 4. 外部归并排序：让有序片段逐步接起来 > 4.2 用 3 个页框完成 7 页数据的排序",
+   "page_start": 13,
+   "page_end": 15,
+   "char_count": 785,
+   "content": "沿用课件的完整数据：共 7 [页](#页)，每页容纳 2 个键。为突出排序过程，图中只写键，真实记录仍要携带其值或[记录 ID](#记录%20ID)。方括号表示一页，花括号表示一个[归并段](#归并段)。\n\n```text\nInput\n[3|4]  [6|2]  [9|4]  [8|7]  [5|6]  [3|1]  [9|1]\n\nPass 0: sort each page\n{[3|4]}  {[2|6]}  {[4|9]}  {[7|8]}  {[5|6]}  {[1|3]}  {[1|9]}\n\nPass 1: merge pairs of 1-page runs\n{[2|3] [4|6]}  {[4|7] [8|9]}  {[1|3] [5|6]}  {[1|9]}\n\nPass 2: merge pairs of runs from Pass 1\n{[2|3] [4|4] [6|7] [8|9]}  {[1|1] [3|5] [6|9]}\n\nPass 3: merge the last two runs\n{[1|1] [2|3] [3|4] [4|5] [6|6] [7|8] [9|9]}\n```\n\n第一组归并怎样使用那 3 个[页](#页)框，可以逐步看清：\n![PPT 第 14 页](slides/page-26.png)\n\n![PPT 第 14 页](slides/page-27.png)\n\n![PPT 第 14 页](slides/page-28.png)\n\n![PPT 第 14 页](slides/page-29.png)\n\n![PPT 第 14 页](slides/page-30.png)\n\n![PPT 第 14 页](slides/page-31.png)\n\n![PPT 第 14 页](slides/page-32.png)"
+  },
+  {
+   "chunk_id": 635,
+   "seq": 24,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 4. 外部归并排序：让有序片段逐步接起来 > 4.2 用 3 个页框完成 7 页数据的排序 (part 2)",
+   "page_start": 13,
+   "page_end": 15,
+   "char_count": 761,
+   "content": "PT 第 14 页](slides/page-30.png)\n\n![PPT 第 14 页](slides/page-31.png)\n\n![PPT 第 14 页](slides/page-32.png)\n\n![PPT 第 14 页](slides/page-33.png)\n\n\n| 时刻 | A 当前候选 | B 当前候选 | 动作 | 内存中的输出[页](#页) |\n|---|---|---|---|---|\n| 开始 | 3 | 2 | 选择 2，推进 B | `[2\\|_]` |\n| 下一步 | 3 | 6 | 选择 3，推进 A | `[2\\|3]`，写盘后清空 |\n| 下一步 | 4 | 6 | 选择 4，A 随后结束 | `[4\\|_]` |\n| 收尾 | 无 | 6 | 输出 B 的剩余记录 | `[4\\|6]`，写盘 |\n\n磁盘上现在有 2 个新的输出[页](#页)，内存里仍然只用了 1 个输出页框。磁盘结果的长度与内存缓冲的数量，是两个不同的量。\n\n第 2 [趟](#趟)合并更长的[归并段](#归并段)时，规则完全相同。左侧先读 `[2|3]`，右侧先读 `[4|7]`；左[页](#页)读完后才换入 `[4|6]`。一页读完只表示该页结束，必须等[归并段](#归并段)的所有页都读完，才表示这一侧真正结束。\n\n[归并段](#归并段)数量不是 2 的整数次幂也没有问题。第 1 [趟](#趟)最后那个单[页](#页)[归并段](#归并段)暂时没有伙伴，作为独立[归并段](#归并段)进入下一[趟](#趟)。第 2 [趟](#趟)的两个结果实际分别长 4 页和 3 页；最后合起来仍是 7 页。课件把最后一层称为“8-Page Runs”，表示这一层最多能够覆盖 8 页，并没有凭空多出一页数据。"
+  },
+  {
+   "chunk_id": 636,
+   "seq": 25,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 4. 外部归并排序：让有序片段逐步接起来 > 4.3 页 I/O 的代价从哪里来",
+   "page_start": 14,
+   "page_end": 15,
+   "char_count": 723,
+   "content": "设输入共 `N` [页](#页)，并采用刚才“第 0 [趟](#趟)每次只排一页”的简化算法。第 0 [趟](#趟)产生 `N` 个[归并段](#归并段)；之后每一[趟](#趟)最多把[归并段](#归并段)数量减半。需要多少次减半才能只剩一个，就需要多少[趟](#趟)归并：\n\n```math\nP_{\\text{merge}} = \\lceil \\log_2 N \\rceil,\n\\qquad\nP = 1 + \\lceil \\log_2 N \\rceil.\n```\n\n`P` 是包含第 0 [趟](#趟)在内的总[趟](#趟)数。向上取整是因为多出来的一个[归并段](#归并段)也必须处理，不能完成半[趟](#趟)后就宣告有序。\n\n在每[趟](#趟)都完整读取并写回全部数据、记录表示和总[页](#页)数保持不变的计数模型下，每[趟](#趟)读 `N` 页、写 `N` 页：\n\n```math\nC_{\\text{I/O}} = 2N P\n              = 2N\\left(1 + \\lceil \\log_2 N \\rceil\\right).\n```\n\n`C_I/O` 以[页](#页)的读写次数计量，不是执行时间，也不是操作系统实际发出的请求数；一次大请求可以包含多个页。这个模型暂时忽略缓存命中、文件元数据和没有重写的单独[归并段](#归并段)，用来比较算法主要的数据搬运量。\n\n代入刚才的 7 [页](#页)例子：\n\n```math\nP = 1 + \\lceil \\log_2 7 \\rceil = 1 + 3 = 4,\n\\qquad\nC_{\\text{I/O}} = 2 \\times 7 \\times 4 = 56.\n```"
+  },
+  {
+   "chunk_id": 637,
+   "seq": 26,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 4. 外部归并排序：让有序片段逐步接起来 > 4.3 页 I/O 的代价从哪里来 (part 2)",
+   "page_start": 14,
+   "page_end": 15,
+   "char_count": 460,
+   "content": "th\nP = 1 + \\lceil \\log_2 7 \\rceil = 1 + 3 = 4,\n\\qquad\nC_{\\text{I/O}} = 2 \\times 7 \\times 4 = 56.\n```\n\n| [趟](#趟) | 这一[趟](#趟)结束后的[归并段](#归并段)长度 | 读[页](#页)数 | 写页数 |\n|---|---|---:|---:|\n| 0 | `1, 1, 1, 1, 1, 1, 1` | 7 | 7 |\n| 1 | `2, 2, 2, 1` | 7 | 7 |\n| 2 | `4, 3` | 7 | 7 |\n| 3 | `7` | 7 | 7 |\n| 合计 | 一个完整有序[归并段](#归并段) | 28 | 28 |\n\n这里最后一[趟](#趟)包含把有序结果写到磁盘的代价，尚未包含下游[算子](#算子)再读这个文件的代价。如果最后归并直接向下游交付记录，就可以省去最终结果的落盘，以及相应的再次读回。计算 I/O 前，先确定结果到底是写入临时文件还是直接交付，公式才有清楚的边界。"
+  },
+  {
+   "chunk_id": 638,
+   "seq": 27,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 4. 外部归并排序：让有序片段逐步接起来 > 4.4 更多内存同时减少初始段数和归并层数",
+   "page_start": 15,
+   "page_end": 16,
+   "char_count": 789,
+   "content": "3 个[页](#页)框已经足够让算法运行，但它没有用好更多内存。设当前排序可用 `B` 个缓冲页，通用[外部归并排序](#外部归并排序)可以在两个地方受益。\n![PPT 第 15 页](slides/page-34.png)\n\n![PPT 第 16 页](slides/page-35.png)\n\n\n生成初始[归并段](#归并段)时，一次读入 `B` [页](#页)，作为整体排序，产生最长为 `B` 页的[归并段](#归并段)。初始[归并段](#归并段)数量于是变为：\n\n```math\nR_0 = \\left\\lceil \\frac{N}{B} \\right\\rceil.\n```\n\n`R_0` 是第 0 [趟](#趟)输出的[归并段](#归并段)数，最后一个可以短于 `B` 页。这里把 `B` 理解为已经可供算法使用的数据缓冲预算，暂不细算游标、比较器和管理结构的少量额外空间。\n\n归并时保留 1 [页](#页)作为输出，每个输入[归并段](#归并段)各占 1 个页框，于是最多能同时归并 `B − 1` 个[归并段](#归并段)。这叫多路归并；**[归并路数](#归并路数)（Merge Fan-in）**就是一次归并同时处理的输入[归并段](#归并段)数量。\n\n每次从各输入的头部选择最小键即可。路数较多时，可以用一个小优先队列保存每路当前的头部，避免为了输出一条记录而从头扫描所有输入。输入[归并段](#归并段)在磁盘上可以很长，每路仍然只需一个当前[页](#页)。\n\n第 `i` [趟](#趟)归并后的段数为：\n\n```math\nR_i = \\left\\lceil \\frac{R_{i-1}}{B-1} \\right\\rceil.\n```\n\n只要 `N ≥ 1` 且 `B ≥ 3`，总[趟](#趟)数和完整[物化](#物化)的[页](#页) I/O 代价为："
+  },
+  {
+   "chunk_id": 639,
+   "seq": 28,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 4. 外部归并排序：让有序片段逐步接起来 > 4.4 更多内存同时减少初始段数和归并层数 (part 2)",
+   "page_start": 15,
+   "page_end": 16,
+   "char_count": 623,
+   "content": "l \\frac{R_{i-1}}{B-1} \\right\\rceil.\n```\n\n只要 `N ≥ 1` 且 `B ≥ 3`，总[趟](#趟)数和完整[物化](#物化)的[页](#页) I/O 代价为：\n\n```math\nP = 1 + \\left\\lceil\n      \\log_{B-1}\\left\\lceil\\frac{N}{B}\\right\\rceil\n    \\right\\rceil,\n\\qquad\nC_{\\text{I/O}} = 2NP.\n```\n\n式中最外面的 `1` 来自初始排序，里面的向上取整计算初始段数，对数和外层向上取整计算还需多少[趟](#趟)归并。`B − 1` 是输入[归并段](#归并段)的数量，不是每[趟](#趟)只处理 `B − 1` [页](#页)。每一[趟](#趟)仍然要处理完整的 `N` 页，只是分成若干组输入[归并段](#归并段)来处理。\n\n如果 `N ≤ B`，初始排序已能得到一个完整有序[归并段](#归并段)，无须再归并。真实执行中，这份结果还可能直接留在内存供下游使用，因而不必支付公式假定的最终磁盘写入。\n\n还要注意，简化二路算法与通用算法的第 0 [趟](#趟)不同。把 `B = 3` 代入通用公式时，第 0 [趟](#趟)会按每 3 [页](#页)生成初始段；前一节为了讲清机制，刻意按每 1 页生成初始段。因此，两种公式即使使用同样数量的页框，也不一定得到相同[趟](#趟)数。"
+  },
+  {
+   "chunk_id": 640,
+   "seq": 29,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 4. 外部归并排序：让有序片段逐步接起来 > 4.5 108 页数据、5 个缓冲页的完整演算",
+   "page_start": 17,
+   "page_end": 17,
+   "char_count": 739,
+   "content": "令 `N = 108`、`B = 5`。第 0 [趟](#趟)每次最多排序 5 [页](#页)；之后最多四路归并，因为还要保留 1 个输出页框。\n![PPT 第 36 页](slides/page-36.png)\n\n\n| [趟](#趟) | 输入如何组合 | 输出[归并段](#归并段)数 | 输出[归并段](#归并段)的实际长度 |\n|---|---|---:|---|\n| 0 | 每次读入最多 5 [页](#页)并排序 | `⌈108 / 5⌉ = 22` | 21 段各 5 页，最后 1 段 3 页 |\n| 1 | 每次合并最多 4 个初始段 | `⌈22 / 4⌉ = 6` | 5 段各 20 页，最后 1 段 8 页 |\n| 2 | 每次合并最多 4 个上一层的段 | `⌈6 / 4⌉ = 2` | 第 1 段 80 页，第 2 段 28 页 |\n| 3 | 合并剩下的 2 个段 | 1 | 108 页 |\n\n第 1 [趟](#趟)最后的 8 [页](#页)来自 `5 + 3`；第 2 [趟](#趟)最后的 28 页来自 `20 + 8`。这些短段始终属于同一份数据，无须补齐到名义长度。\n\n```math\nR_0 = \\left\\lceil\\frac{108}{5}\\right\\rceil = 22,\n\\qquad\nP = 1 + \\lceil\\log_4 22\\rceil\n  = 1 + \\lceil 2.2297\\ldots\\rceil\n  = 4.\n```\n\n每[趟](#趟)读 108 [页](#页)、写 108 页，所以：\n\n```math\nC_{\\text{I/O}} = 2 \\times 108 \\times 4 = 864.\n```"
+  },
+  {
+   "chunk_id": 641,
+   "seq": 30,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 4. 外部归并排序：让有序片段逐步接起来 > 4.5 108 页数据、5 个缓冲页的完整演算 (part 2)",
+   "page_start": 17,
+   "page_end": 17,
+   "char_count": 410,
+   "content": "4.\n```\n\n每[趟](#趟)读 108 [页](#页)、写 108 页，所以：\n\n```math\nC_{\\text{I/O}} = 2 \\times 108 \\times 4 = 864.\n```\n\n当内存增加到足以让全部初始[归并段](#归并段)在一[趟](#趟)中合并，排序最多只需初始排序加一次归并，共 2 [趟](#趟)。条件是：\n\n```math\n\\left\\lceil\\frac{N}{B}\\right\\rceil \\le B-1\n\\quad\\Longleftrightarrow\\quad\nN \\le B(B-1).\n```\n\n例如 108 [页](#页)数据配 11 个缓冲页，初始段数是 `⌈108 / 11⌉ = 10`，正好能一次十路归并完成，页 I/O 降为 `2 × 108 × 2 = 432`。增加内存的收益会在减少整整一[趟](#趟)时明显跃升：那意味着整份数据少读一遍，也少写一遍。"
+  },
+  {
+   "chunk_id": 642,
+   "seq": 31,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 5. 趟数之外，还要减少等待和比较开销 > 5.1 双缓冲（Double Buffering）：在计算时准备下一批数据",
+   "page_start": 18,
+   "page_end": 35,
+   "char_count": 774,
+   "content": "前面的算法默认需要输入时才发起读取，输出[页](#页)满时才等待写入完成。这样做能得到正确结果，但 CPU 可能花很多时间等待磁盘；CPU 开始比较和归并以后，磁盘又可能没有收到下一批请求。\n\n**[双缓冲](#双缓冲)（Double Buffering）**为处理过程准备两套缓冲空间：一套供 CPU 使用，另一套用于后台读写。当前数据被归并时，下一批输入可以提前读入；当前输出等待写盘时，后续结果可以写进另一块空闲缓冲。两套空间交换角色，计算和 I/O 就能够重叠。\n\n```text\nStep 1:  Buffer set A -> merge current data\n         Buffer set B -> prepare / prefetch next data\n\nStep 2:  Buffer set A -> write completed output / refill\n         Buffer set B -> merge ready data\n\nStep 3:  Swap roles again and continue\n```\n\n这里[预取](#预取)的是接下来需要的[页](#页)或数据块，不是要求把整个巨大[归并段](#归并段)都装入第二套缓冲。后台工作可以由另一个线程承担，也可以通过异步 I/O 发出请求，让当前执行线程继续计算。线程可以理解为能够独立推进的一条执行路径；它们共享缓冲空间时，还要确保某页没有在读取期间被覆盖，第 [10](../L10%20Astra%20数据结构中的闩锁%20Latching%20in%20Data%20Structures/15-445-lecture-10-index-concurrency-control.md) 讲讨论的同步方法因此有了用武之地。"
+  },
+  {
+   "chunk_id": 643,
+   "seq": 32,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 5. 趟数之外，还要减少等待和比较开销 > 5.1 双缓冲（Double Buffering）：在计算时准备下一批数据 (part 2)",
+   "page_start": 18,
+   "page_end": 35,
+   "char_count": 673,
+   "content": "0Latching%20in%20Data%20Structures/15-445-lecture-10-index-concurrency-control.md) 讲讨论的同步方法因此有了用武之地。\n\n若一批工作需要 `T_CPU` 的计算时间和 `T_I/O` 的读写时间，串行执行大致需要二者相加；理想地重叠后，稳定阶段的时间更接近二者较大值：\n\n```math\nT_{\\text{serial}} \\approx T_{\\text{CPU}} + T_{\\text{I/O}},\n\\qquad\nT_{\\text{overlap}} \\approx \\max(T_{\\text{CPU}}, T_{\\text{I/O}}).\n```\n\n`T_I/O` 已包含存储设备承担这批读写的时间，读写仍会共享设备带宽。[双缓冲](#双缓冲)能够隐藏部分等待，不能凭空增加磁盘带宽，也不保证所有 I/O 延迟都会消失。\n\n它还有内存代价。两套完整缓冲把每套可用容量大致减半；如果每路输入都从 1 [页](#页)改为 2 页，在相同总内存下就必须降低[归并路数](#归并路数)。较低的路数有可能增加一[趟](#趟)归并。因此不能一边把全部 `B − 1` 个输入页都算给归并，一边再假定额外缓冲免费存在。实际系统要比较省下的等待与增加的数据读写。\n\n同一思路也解释了为什么要把 I/O 合并成较大的块。归并在每个输入段内部向前推进，但如果不断在多路文件之间发出极小请求，仍可能浪费存储能力。更大的连续块配合[预取](#预取)，能够摊薄每个请求的固定开销。"
+  },
+  {
+   "chunk_id": 644,
+   "seq": 33,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 5. 趟数之外，还要减少等待和比较开销 > 5.2 比较器也可能成为瓶颈",
+   "page_start": 19,
+   "page_end": 19,
+   "char_count": 785,
+   "content": "当 I/O 得到改善，比较本身就可能成为主要开销。整数比较只需很少的指令，长字符串、多列[排序键](#排序键)、空值和不同排序方向，却需要更多判断。排序上亿条记录时，这些判断会被重复执行很多次。\n![PPT 第 19 页](slides/page-44.png)\n\n\n**[代码特化](#代码特化)（Code Specialization）**为已知的键类型和比较规则准备专用代码。C 的 `qsort` 接收一个比较函数指针，通用实现反复通过它调用比较器；如果排序代码已经知道要比较整数，就可以把整数比较直接放进排序循环，让编译器进一步优化。C++ 的模板特化可以在编译时生成对应版本；也可以在查询到来后生成代码并即时编译。它们都在把反复发生的类型解释和间接调用，提前转化为一次确定代码路径的工作。\n\n**[后缀截断](#后缀截断)（Suffix Truncation）**先使用长字符串的一个紧凑前缀作为比较摘要。如果前缀已经分出大小，就不用访问后面的字符；前缀相同，再比较完整字符串。例如 `database` 与 `datagram` 的前 4 个字符同为 `data`，这时前缀只能说明“尚未分出结果”，不能说明两串相等。前缀比较要遵循所用的[排序规则](#排序规则)；遇到语言相关的字符排序，原始字节前缀不一定能直接替代字符比较。这里截断的是快速比较路径需要处理的信息，完整键仍然要保留。\n\n**[键规范化](#键规范化)（Key Normalization）**把类型、排序方向和空值等比较规则编码进一个[保序](#保序)的二进制表示。**[保序](#保序)（Order-preserving）**的意思是，比较编码后的键所得到的大小关系，与原本的[排序规则](#排序规则)相同。这样，反复解释不同字段类型的工作可以在编码时完成，排序循环主要比较统一表示。"
+  },
+  {
+   "chunk_id": 645,
+   "seq": 34,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 5. 趟数之外，还要减少等待和比较开销 > 5.2 比较器也可能成为瓶颈 (part 2)",
+   "page_start": 19,
+   "page_end": 19,
+   "char_count": 596,
+   "content": ")（Order-preserving）**的意思是，比较编码后的键所得到的大小关系，与原本的[排序规则](#排序规则)相同。这样，反复解释不同字段类型的工作可以在编码时完成，排序循环主要比较统一表示。\n\n例如，直接把有符号整数的内存字节按无符号[字节序](#字节序)比较，就未必得到正确的数值顺序；规范化必须处理符号和字节次序。多个变长字段拼接时，还要编码字段边界，否则不同的字段组合可能变成相同字节串。第 [6](../L6%20Opus%20列存数据库%20Column%20Store%20Databases/15-445-lecture-06-storage-models-and-compression.md) 讲的[字典编码](#字典编码)也不能自动承担这个工作：不同文件里的字典编号可能对应不同值，编号本身也未必保持值的排序顺序。\n\nNotes 用“编码、填充成固定长度字符串”描述这种优化。固定长度便于快速处理，但任意长字符串不可能都无损塞入同一小块固定空间；实现通常需要变长后备表示，或者先比较固定前缀、相同时再比较完整键。DuckDB 的排序实现就把通用[保序编码](#保序编码)与适合固定大小键的整数比较结合起来。[DuckDB 排序实现说明](https://duckdb.org/2025/09/24/sorting-again#key-normalization)"
+  },
+  {
+   "chunk_id": 646,
+   "seq": 35,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 5. 趟数之外，还要减少等待和比较开销 > 5.2 比较器也可能成为瓶颈 (part 3)",
+   "page_start": 19,
+   "page_end": 19,
+   "char_count": 315,
+   "content": "序编码)与适合固定大小键的整数比较结合起来。[DuckDB 排序实现说明](https://duckdb.org/2025/09/24/sorting-again#key-normalization)\n\n这些优化分别减少调用开销、减少需要查看的字符串内容，以及减少比较时的类型处理。DuckDB 在 2025 年仍重新设计了排序实现，说明[数据库](#数据库)里的排序还有具体的工程空间：数据如何表示、怎样跨[页](#页)访问、如何归并，都能改变同一个排序任务的实际代价。[Redesigning DuckDB’s Sort, Again](https://duckdb.org/2025/09/24/sorting-again)"
+  },
+  {
+   "chunk_id": 647,
+   "seq": 36,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 6. 已有 B+ 树，能否直接取得有序结果 > 6.1 索引顺序必须与所需顺序匹配",
+   "page_start": 20,
+   "page_end": 20,
+   "char_count": 716,
+   "content": "[B+ 树](#B+%20树)（B+ Tree，见第 [8](../L8%20Astra%20B%2B树%20世界上最好的数据结构%20B%2BTrees%20The%20Best%20Data%20Structure%20in%20the%20World/15-445-lecture-08-indexes-and-filters-i.md)、[9](../L9%20Opus%20向量索引%20倒排索引%20跳表%20布隆过滤器%20Vector%20Indexes%20Inverted%20Indexes%20Skip%20Lists%20Bloom%20Filters/15-445-lecture-09-indexes-and-filters-ii.md) 讲）的[叶节点](#叶节点)已经按[索引](#索引)键排列。若这个顺序正好满足查询要求，[数据库](#数据库)可以沿叶节点扫描，直接取得有序的键和对应记录，无须重新排序。哈希索引则没有这样的顺序可供利用。\n![PPT 第 20 页](slides/page-45.png)\n\n\n多列[索引](#索引)需要看键的前缀。例如按 `(a, b)` 排列的索引，通常能够提供按 `a`，或按 `a, b` 的顺序；只要求按 `b` 时，各个 `a` 的区间里虽然分别按 `b` 排列，跨区间却不一定有序。排序方向和空值位置也要匹配。一个全部升序的多列索引反向扫描后，各列方向会一起反转，不能因此满足任意升降序组合。[PostgreSQL 索引与排序说明](https://www.postgresql.org/docs/15/indexes-ordering.html)"
+  },
+  {
+   "chunk_id": 648,
+   "seq": 37,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 6. 已有 B+ 树，能否直接取得有序结果 > 6.1 索引顺序必须与所需顺序匹配 (part 2)",
+   "page_start": 20,
+   "page_end": 20,
+   "char_count": 221,
+   "content": "方向会一起反转，不能因此满足任意升降序组合。[PostgreSQL 索引与排序说明](https://www.postgresql.org/docs/15/indexes-ordering.html)\n\n匹配[排序键](#排序键)只是第一步。[叶节点](#叶节点)如果只保存[记录 ID](#记录%20ID)，查询又需要其他列，就还要根据 ID 取回[元组](#元组)。真正影响 I/O 的，是这个取回过程能否沿着数据[页](#页)顺序前进。"
+  },
+  {
+   "chunk_id": 649,
+   "seq": 38,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 6. 已有 B+ 树，能否直接取得有序结果 > 6.2 聚簇与非聚簇的差别在取回数据的路径",
+   "page_start": 21,
+   "page_end": 22,
+   "char_count": 727,
+   "content": "[聚簇索引](#聚簇索引)（Clustered Index，见第 [8](../L8%20Astra%20B%2B树%20世界上最好的数据结构%20B%2BTrees%20The%20Best%20Data%20Structure%20in%20the%20World/15-445-lecture-08-indexes-and-filters-i.md)、[9](../L9%20Opus%20向量索引%20倒排索引%20跳表%20布隆过滤器%20Vector%20Indexes%20Inverted%20Indexes%20Skip%20Lists%20Bloom%20Filters/15-445-lecture-09-indexes-and-filters-ii.md) 讲）让数据的组织顺序与[索引](#索引)键接近一致。在理想的聚簇布局下，先到最左侧[叶节点](#叶节点)，再沿叶节点向后扫描，对应的数据[页](#页)也能依次访问。查询既利用了已有顺序，又省下了生成临时[归并段](#归并段)的读写。\n\nPPT 与 Notes 把这种情况概括为“总比外部排序好，且没有计算代价”。其中的关键是**没有重新排序的计算代价**：查找、读取页面和返回记录仍有成本。在所需顺序匹配、数据布局良好且访问相同记录的模型下，已有的聚簇顺序确实使重新排序变得多余。\n\n[非聚簇索引](#非聚簇索引)（Unclustered Index）的[叶节点](#叶节点)有序，数据记录却可能散落在各处。按键取得第 1 条记录后，第 2 条记录可能位于另一个磁盘[页](#页)，第 3 条又跳回别处。在缓存不足、记录分布离散的情形下，代价可能接近每条记录一次随机读盘。"
+  },
+  {
+   "chunk_id": 650,
+   "seq": 39,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 6. 已有 B+ 树，能否直接取得有序结果 > 6.2 聚簇与非聚簇的差别在取回数据的路径 (part 2)",
+   "page_start": 21,
+   "page_end": 22,
+   "char_count": 633,
+   "content": "点)有序，数据记录却可能散落在各处。按键取得第 1 条记录后，第 2 条记录可能位于另一个磁盘[页](#页)，第 3 条又跳回别处。在缓存不足、记录分布离散的情形下，代价可能接近每条记录一次随机读盘。\n\n这时按数据[页](#页)顺序扫描整张表，再做[外部归并排序](#外部归并排序)，反而可能更便宜。假设一页可以容纳很多条记录，顺序扫描按“页”读入一批记录，而沿[非聚簇索引](#非聚簇索引)追踪指针可能按“记录”不断触发读盘。两者的数据条数相同，访问次数和访问方式却差得很远。\n\n把[记录 ID](#记录%20ID) 先按[页](#页)号排序，确实能改善取回数据的[局部性](#局部性)，但它也打乱了查询要求的键顺序，随后还要恢复顺序。这又回到了排序代价的比较。\n\n[非聚簇索引](#非聚簇索引)有几个直接受益的场景。Top-N 只取很少几条时，少量随机读取可能远比扫描整表便宜；若[索引](#索引)已经包含查询所需的全部列，也可以避免大量[回表](#回表)访问；如果相关数据[页](#页)已在内存中，随机磁盘读取的惩罚会减小。因此，判断依据应是“这次查询实际需要访问多少数据页”，不能仅凭索引存在就决定使用它。\n\n[B+ 树](#B+%20树)本身也可以保存在磁盘上，并由[缓冲池](#缓冲池)缓存。[索引](#索引)大小小于缓存时，它甚至可能长期留在内存；系统还可以优先缓存某些索引[页](#页)。索引是否命中缓存，与记录是否按索引顺序聚簇，是两个独立的性质。"
+  },
+  {
+   "chunk_id": 651,
+   "seq": 40,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 7. 排序让同一组记录相邻，聚合就能逐组完成 > 7.1 去重先缩小数据，再利用相邻关系",
+   "page_start": 23,
+   "page_end": 24,
+   "char_count": 777,
+   "content": "**[聚合算子](#聚合算子)（Aggregation Operator）**把一组记录中的相关值归约为一个或多个结果，例如每门课程的学生数或平均 GPA。算出平均值并不复杂，困难在于从大量记录中找到属于同一组的所有成员。排序给出的办法是：按分组键排序，让这些成员连续出现。这种实现称为**[排序聚合](#排序聚合)（Sort-based Aggregation）**。\n![PPT 第 23 页](slides/page-48.png)\n\n\n[去重](#去重)也可以使用相同的数据组织方法。沿用课件的 `enrolled` 表：\n\n| sid | cid | grade |\n|---:|---|---|\n| 53666 | 15-445 | C |\n| 53688 | 15-721 | A |\n| 53688 | 15-826 | B |\n| 53666 | 15-721 | C |\n| 53655 | 15-445 | C |\n\n```sql\nSELECT DISTINCT cid\n  FROM enrolled\n WHERE grade IN ('B','C')\n ORDER BY cid;\n```\n\n可以把执行安排写成下面这条数据流：\n![PPT 第 24 页](slides/page-49.png)\n\n![PPT 第 24 页](slides/page-50.png)\n\n![PPT 第 24 页](slides/page-51.png)\n\n\n```mermaid\nflowchart LR\n    A[\"扫描 enrolled\"] --> B[\"过滤：grade 为 B 或 C\"]\n    B --> C[\"投影：只保留 cid\"]\n    C --> D[\"按 cid 排序\"]\n    D --> E[\"相邻去重\"]\n```"
+  },
+  {
+   "chunk_id": 652,
+   "seq": 41,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 7. 排序让同一组记录相邻，聚合就能逐组完成 > 7.1 去重先缩小数据，再利用相邻关系 (part 2)",
+   "page_start": 23,
+   "page_end": 24,
+   "char_count": 618,
+   "content": "--> B[\"过滤：grade 为 B 或 C\"]\n    B --> C[\"投影：只保留 cid\"]\n    C --> D[\"按 cid 排序\"]\n    D --> E[\"相邻去重\"]\n```\n\n过滤先删除 `(53688, 15-721, A)`，但保留另一条成绩为 `C` 的 `15-721` 记录。[投影](#投影)后的键序列为：\n\n```text\n15-445, 15-826, 15-721, 15-445\n```\n\n排序后得到：\n\n```text\n15-445, 15-445, 15-721, 15-826\n```\n\n顺序扫描时，第一次遇到 `15-445` 就保留，第二次发现它与上一项相同便跳过；后面的 `15-721` 和 `15-826` 各保留一次。最终输出依次为 `15-445, 15-721, 15-826`。\n\n顺序安排在这里有实在的收益。提前过滤减少要排序的行数，提前[投影](#投影)减少每条中间记录的宽度，两者都可能减少排序[页](#页)数。投影必须保留后续还会使用的列，所以 `grade` 要先参与过滤，之后才能丢弃。\n\n`ORDER BY cid` 已经要求按课程编号排序，`DISTINCT cid` 正好利用同一份顺序；[去重](#去重)只增加一次轻量的相邻比较，不必再建立一套独立的去重结构。如果需要外部排序，也可以在最后一次归并输出时进行去重，避免先写出完整排序结果再读回来。"
+  },
+  {
+   "chunk_id": 653,
+   "seq": 42,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 7. 排序让同一组记录相邻，聚合就能逐组完成 > 7.2 每组只需保留聚合状态",
+   "page_start": 25,
+   "page_end": 25,
+   "char_count": 634,
+   "content": "下面按课程计算学生的平均 GPA：\n\n```sql\nSELECT cid, AVG(s.gpa)\n  FROM student AS s, enrolled AS e\n WHERE s.sid = e.sid\n GROUP BY cid;\n```\n\n[连接](#连接)算法在第 [12](../L12%20Astra%20哈希连接%20排序合并连接%20嵌套循环连接%20Hash%20Joins%20Sort%20Merge%20Joins%20Nested%20Loop%20Join%20Algorithms/15-445-lecture-12-joins-algorithms.md) 讲展开。这里直接从该聚合示例给出的连接结果开始，4 行依次为 `(15-445, 3.62)`、`(15-826, 2.89)`、`(15-721, 3.33)`、`(15-445, 3.7)`。按 `cid` 排序以后：\n\n| cid | s.gpa |\n|---|---:|\n| 15-445 | 3.62 |\n| 15-445 | 3.70 |\n| 15-721 | 3.33 |\n| 15-826 | 2.89 |\n\n**[聚合状态](#聚合状态)（Aggregate State，也称 Running Value）**是处理一部分输入之后，为继续计算某个聚合而保留的摘要。求平均值时，只需保留计数和总和，即 `(count, sum)`，不必保存这组所有 GPA。"
+  },
+  {
+   "chunk_id": 654,
+   "seq": 43,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 7. 排序让同一组记录相邻，聚合就能逐组完成 > 7.2 每组只需保留聚合状态 (part 2)",
+   "page_start": 25,
+   "page_end": 25,
+   "char_count": 693,
+   "content": "e State，也称 Running Value）**是处理一部分输入之后，为继续计算某个聚合而保留的摘要。求平均值时，只需保留计数和总和，即 `(count, sum)`，不必保存这组所有 GPA。\n\n| 读到的记录 | 当前组的状态 | 何时输出 |\n|---|---|---|\n| `(15-445, 3.62)` | `15-445 → (1, 3.62)` | 当前组尚未结束 |\n| `(15-445, 3.70)` | `15-445 → (2, 7.32)` | 继续累加同一组 |\n| `(15-721, 3.33)` | 新建 `15-721 → (1, 3.33)` | 键变化，先输出 `15-445 → 7.32 / 2 = 3.66` |\n| `(15-826, 2.89)` | 新建 `15-826 → (1, 2.89)` | 键变化，先输出 `15-721 → 3.33` |\n| 输入结束 | 无后续记录 | 输出最后一组 `15-826 → 2.89` |\n\n换组时可以立即输出前一组，因为输入有序，后面不会再次出现那一组的键——不过这是指**已经封口的单个分组**；[算子](#算子)整体仍要读完输入才能结束，这正是第 [13](../L13%20Opus%20查询执行%20上%20Query%20Execution%20Part%201/15-445-lecture-13-query-execution-i.md) 讲把聚合列为流水线阻断点的原因。输入结束也是一个组边界：若只在键变化时输出，就会遗漏最后一组。\n\n常见聚合需要的状态很小："
+  },
+  {
+   "chunk_id": 655,
+   "seq": 44,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 7. 排序让同一组记录相邻，聚合就能逐组完成 > 7.2 每组只需保留聚合状态 (part 3)",
+   "page_start": 25,
+   "page_end": 25,
+   "char_count": 745,
+   "content": "5-445-lecture-13-query-execution-i.md) 讲把聚合列为流水线阻断点的原因。输入结束也是一个组边界：若只在键变化时输出，就会遗漏最后一组。\n\n常见聚合需要的状态很小：\n\n| 聚合表达式 | 需要保留的状态 | 每条有效输入如何更新 |\n|---|---|---|\n| `COUNT(*)` | 行数 | 每行加 1 |\n| `COUNT(col)` | 非空值数量 | `col` 非空时加 1 |\n| `SUM(col)` | 累计和 | 把非空值加进去 |\n| `MIN(col)` | 当前最小值 | 与非空值比较，保留较小者 |\n| `MAX(col)` | 当前最大值 | 与非空值比较，保留较大者 |\n| `AVG(col)` | 非空值数量与累计和 | 同时更新，结束时计算 `sum / count` |\n\n实际实现还要记录是否见过有效值。`AVG(col)` 的分母是非空值个数，不能直接使用 `COUNT(*)`；全为空值的组，其 `SUM`、`AVG`、`MIN`、`MAX` 返回 `NULL`，不能仅凭状态初始化成 0 就输出 0。分组键为 `NULL` 的记录也要按 SQL 分组语义归为同一组。\n\n对于这些固定大小状态的聚合，有序扫描阶段只需保存当前组的键和摘要，哪怕这一组有很多记录，状态也不会随组内行数增长。排序阶段仍可能需要大量工作内存或临时文件，因此“聚合扫描只用很少内存”与“整个[排序聚合](#排序聚合)只用很少内存”要区分开。\n\n这个具体实现会按分组键产生有序输出，但 `GROUP BY` 本身并不承诺结果顺序；应用需要某种顺序时，仍应明确写 `ORDER BY`。接下来就有一种根本不维持全局顺序的聚合方法。"
+  },
+  {
+   "chunk_id": 656,
+   "seq": 45,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 8. 只需要找到同组记录时，用哈希分开处理 > 8.1 哈希聚合（Hash Aggregation）按键找到状态",
+   "page_start": 26,
+   "page_end": 34,
+   "char_count": 737,
+   "content": "排序同时确定了“哪些键相同”和“不同键谁前谁后”。计算每门课程的平均 GPA，只需要第一个信息。若下游也不需要顺序，可以用[哈希表](#哈希表)直接找到每个组的摘要，省去建立全局顺序的工作。\n![PPT 第 26 页](slides/page-59.png)\n\n\n**[哈希聚合](#哈希聚合)（Hash Aggregation）**在扫描输入时，以分组键为键、以[聚合状态](#聚合状态)为值维护一张临时[哈希表](#哈希表)。它只服务于这次计算，不是需要长期保存的[数据库](#数据库)[索引](#索引)。\n\n```text\nGroupKey  ->  Aggregate State\n15-445    ->  (count=2, sum=7.32)\n15-826    ->  (count=1, sum=2.89)\n15-721    ->  (count=1, sum=3.33)\n```\n\n每读到一条记录，先计算分组键的哈希值，再到[哈希表](#哈希表)中查找。键已存在，就更新其状态；键尚不存在，就创建一项。对于 `DISTINCT`，值甚至不必保存聚合数值，只需知道这个键是否已经出现。\n\n第 [7](../L7%20Opus%20数据库哈希表%20YugabyteDB%20数据库讲座%20Database%20Hash%20Tables%20YugabyteDB%20Database%20Talk/15-445-lecture-07-hash-tables.md) 讲已经说明，哈希碰撞不代表键相等。两个不同课程编号可能落到同一个桶，仍要比较完整键，再用线性探测或其他碰撞处理方法找到正确位置。SQL 的空值分组规则也必须与哈希和键相等判断保持一致。"
+  },
+  {
+   "chunk_id": 657,
+   "seq": 46,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 8. 只需要找到同组记录时，用哈希分开处理 > 8.1 哈希聚合（Hash Aggregation）按键找到状态 (part 2)",
+   "page_start": 26,
+   "page_end": 34,
+   "char_count": 319,
+   "content": "les.md) 讲已经说明，哈希碰撞不代表键相等。两个不同课程编号可能落到同一个桶，仍要比较完整键，再用线性探测或其他碰撞处理方法找到正确位置。SQL 的空值分组规则也必须与哈希和键相等判断保持一致。\n\n这里的内存规模主要由不同组的数量决定。若输入有 `M` 行、只有 `G` 个不同分组，常见固定大小聚合的状态空间大致随 `G` 增长，而不是随 `M` 增长。一张很大的选课表如果只涉及少数课程，所有组的摘要完全可能放进内存。\n\n在哈希分布和装载情况良好、一次键处理代价有界时，扫描和更新的期望 CPU 时间接近 `O(M)`。如果需要为每个几乎不重复的键都建立一项，临时[哈希表](#哈希表)就会随输入增长；它最终也可能超过内存预算。"
+  },
+  {
+   "chunk_id": 658,
+   "seq": 47,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 8. 只需要找到同组记录时，用哈希分开处理 > 8.2 先分区，让同一组只出现在一个分区里",
+   "page_start": 28,
+   "page_end": 30,
+   "char_count": 776,
+   "content": "[哈希表](#哈希表)放不下时，不能简单地让它的桶随意散布到磁盘，然后每来一条记录就随机读写某个桶。这样的访问方式会失去扫描原表时的顺序性。\n\n**[外部哈希聚合](#外部哈希聚合)（External Hashing Aggregate）**先把输入分成若干磁盘[分区](#分区)，再逐个读回[分区](#分区)，在内存中完成各自的聚合。它也采用分治，不过拆分依据是键的哈希值。\n\n**[分区](#分区)（Partition）**是一组由同一[分区](#分区)规则分派到一起的记录，物理上可以占据多个[页](#页)。使用[哈希函数](#哈希函数) `h₁`，给定 `B` 个缓冲页，可以保留 1 个输入页，把另外 `B − 1` 个页框作为各[分区](#分区)的输出缓冲：\n\n```text\n                         +---> [ partition 0 buffer ] ---> partition 0 file\n[ input page ] ---> h1 --+---> [ partition 1 buffer ] ---> partition 1 file\n                         |                    ...\n                         +---> [ partition B-2 buffer ] -> partition B-2 file\n```\n\n共有 `B − 1` 个[分区](#分区)，若从 0 编号，编号应为 `0` 到 `B − 2`。PPT 第 30 页文字写的是 `B − 1` 个[分区](#分区)，图中最后一个编号却写为 `B − 1`；这里按[分区](#分区)总数统一编号。\n\n对于分组键 `k`，一种简单的分派规则是："
+  },
+  {
+   "chunk_id": 659,
+   "seq": 48,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 8. 只需要找到同组记录时，用哈希分开处理 > 8.2 先分区，让同一组只出现在一个分区里 (part 2)",
+   "page_start": 28,
+   "page_end": 30,
+   "char_count": 547,
+   "content": "2`。PPT 第 30 页文字写的是 `B − 1` 个[分区](#分区)，图中最后一个编号却写为 `B − 1`；这里按[分区](#分区)总数统一编号。\n\n对于分组键 `k`，一种简单的分派规则是：\n\n```math\n\\operatorname{partition}(k) = h_1(k) \\bmod (B-1).\n```\n\n`h₁` 是第一阶段的[哈希函数](#哈希函数)。相同键必然产生相同[分区](#分区)编号，因此所有属于同一组的记录都会进入同一个[分区](#分区)。不同键也可能进入同一个[分区](#分区)，这完全允许；[分区](#分区)只是把需要一起处理的记录集中到较小的数据集合里，还没有完成精确分组。\n\n扫描输入[页](#页)后，记录被追加到对应的输出缓冲。某个输出页满了，就把这页写到该[分区](#分区)的临时文件，复用页框继续接收后续记录；扫描结束时，再写出尚未填满的尾页。**输出缓冲满了，表示应当写出一页，不表示这个[分区](#分区)已经收齐。**同一个键还可能在很后面的输入中再次出现。\n\n归并排序的内存布局是“多路输入、一路输出”，哈希[分区](#分区)则是“一路输入、多路输出”。这两个安排分别服务于合并与拆分，也分别解释了公式里的 `B − 1` 从哪里来。"
+  },
+  {
+   "chunk_id": 660,
+   "seq": 49,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 8. 只需要找到同组记录时，用哈希分开处理 > 8.3 再哈希，逐个分区完成结果",
+   "page_start": 31,
+   "page_end": 32,
+   "char_count": 769,
+   "content": "[分区](#分区)完成后，某门课程的全部记录已经被固定在一个磁盘[分区](#分区)里。于是可以处理完一个[分区](#分区)就释放其工作状态，无须同时保留其他[分区](#分区)的[哈希表](#哈希表)。\n\n第二阶段称为**[再哈希](#再哈希)（ReHash）**：逐[页](#页)读入一个[分区](#分区)，用第二个[哈希函数](#哈希函数) `h₂` 在内存中建立分组[哈希表](#哈希表)，并计算摘要；处理完这个[分区](#分区)，把结果交给输出，再清空或重置哈希表，转向下一个[分区](#分区)。这里的“[再哈希](#再哈希)”指[分区](#分区)后建立内存哈希表的阶段，与哈希表扩容时重新安排所有槽位的操作要按上下文区分。\n\n以第 7.1 节过滤、[投影](#投影)后得到的 4 个课程编号为例，`15-445` 的两次出现一定进入同一[分区](#分区)。对于 `DISTINCT`，该[分区](#分区)第一次见到 `15-445` 时创建[哈希表](#哈希表)项，第二次见到时发现键已存在，直接跳过。即使同一[分区](#分区)的很多[页](#页)都充满了 `15-445`，哈希表也只保留一项。\n\n| 处理到哪里 | 当前内存[哈希表](#哈希表)的变化 | 输出与复用 |\n|---|---|---|\n| 含有 `15-445` 的[分区](#分区) | 第一次插入，后续相同键跳过 | [分区](#分区)结束后输出 `15-445`，重置表 |\n| 含有 `15-826` 的[分区](#分区) | 第一次插入，后续相同键跳过 | [分区](#分区)结束后输出 `15-826`，重置表 |\n| 含有 `15-721` 的[分区](#分区) | 插入 `15-721` | [分区](#分区)结束后输出 `15-721` |"
+  },
+  {
+   "chunk_id": 661,
+   "seq": 50,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 8. 只需要找到同组记录时，用哈希分开处理 > 8.3 再哈希，逐个分区完成结果 (part 2)",
+   "page_start": 31,
+   "page_end": 32,
+   "char_count": 777,
+   "content": "过 | [分区](#分区)结束后输出 `15-826`，重置表 |\n| 含有 `15-721` 的[分区](#分区) | 插入 `15-721` | [分区](#分区)结束后输出 `15-721` |\n\n这张表沿用课件[再哈希](#再哈希)动画中把上述键放在不同[分区](#分区)的情形。真实[分区](#分区)可以包含多个不同键，内存[哈希表](#哈希表)会分别保存它们。例如第 30 页的[分区](#分区)示意中，`15-445` 和 `15-312` 就可能同处一个[分区](#分区)。需要比较的是完整键，而不是“是否来自同一[分区](#分区)”。\n\n为什么处理完一个[分区](#分区)以后，丢掉它的[哈希表](#哈希表)是安全的？假如 `15-445` 被分到了某个[分区](#分区)，所有 `15-445` 都使用相同的分派规则，它们就不可能再出现在其他[分区](#分区)里。**一个[分区](#分区)处理完，意味着其中每一个组都已经看到了全部输入。**这个性质承担了[排序聚合](#排序聚合)中“键变化后不会再遇到旧组”的作用。\n\n`h₂` 的作用也因此明确。`h₁` 负责在磁盘上拆分大数据，`h₂` 负责在一个[分区](#分区)内部把不同键分散到内存[哈希表](#哈希表)的槽位。如果直接复用已经确定[分区](#分区)编号的那部分哈希信息，[分区](#分区)内的记录很容易再次聚集到一起。教材用不同的 `h₁`、`h₂` 表达这个要求；实现也可以使用足够独立的哈希位或不同种子。第二次哈希仍允许碰撞，只要完整键比较和碰撞处理正确，结果就不会出错。\n\n输出可能是 `15-445, 15-826, 15-721`，顺序由[分区](#分区)和[哈希表](#哈希表)遍历决定。它与排序[去重](#去重)保留的是同一集合，但没有附带课程编号的升序。"
+  },
+  {
+   "chunk_id": 662,
+   "seq": 51,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 8. 只需要找到同组记录时，用哈希分开处理 > 8.4 分区过大时，还可以继续拆分",
+   "page_start": 28,
+   "page_end": 34,
+   "char_count": 601,
+   "content": "有 `B − 1` 个[分区](#分区)，不代表每个[分区](#分区)只占 1 [页](#页)，也不保证读回后建立的[哈希表](#哈希表)一定能放进内存。输出页框只承担批量写盘的工作，一个[分区](#分区)可以不断追加新页。\n\nNotes 使用“每个[分区](#分区)能放进内存”作为简单的充分条件。对于维护摘要的聚合，更直接的条件是：**当前[分区](#分区)的分组键、[聚合状态](#聚合状态)和[哈希表](#哈希表)管理空间能够放进内存。**[分区](#分区)本身可以逐[页](#页)读取。如果一个巨大[分区](#分区)里几乎都是同一个课程编号，计算 `COUNT` 或 `AVG` 仍可能只需很小的状态。\n\n如果不同组太多，当前[分区](#分区)的哈希状态确实放不下，就使用新的哈希规则把这个[分区](#分区)继续拆成子[分区](#分区)，再逐个处理。这叫**[递归分区](#递归分区)（Recursive Partitioning）**。其他已经足够小的[分区](#分区)不必一起重做。\n\n[递归分区](#递归分区)依赖键能够被进一步分散。若某个相同键特别频繁，换[哈希函数](#哈希函数)也不会把它拆成多个组，因为相同键仍要相聚。对于这里的计数、和、最值和平均值，大量同键输入可以压缩成一个很小的摘要；需要关注的是状态大小以及数据分布倾斜，而不是只看到某个文件很大就反复[分区](#分区)。"
+  },
+  {
+   "chunk_id": 663,
+   "seq": 52,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 8. 只需要找到同组记录时，用哈希分开处理 > 8.4 分区过大时，还可以继续拆分 (part 2)",
+   "page_start": 28,
+   "page_end": 34,
+   "char_count": 333,
+   "content": "不会把它拆成多个组，因为相同键仍要相聚。对于这里的计数、和、最值和平均值，大量同键输入可以压缩成一个很小的摘要；需要关注的是状态大小以及数据分布倾斜，而不是只看到某个文件很大就反复[分区](#分区)。\n\n[页](#页) I/O 也可以据此估算。设进入[分区](#分区)阶段的输入为 `N` 页，忽略[分区](#分区)尾页未填满带来的额外空间，并假定一次[分区](#分区)后每个[分区](#分区)的哈希状态都能放下，那么先读入 `N` 页、写出约 `N` 页，再读回约 `N` 页，合计约 `3N` 次页 I/O，尚未计最终聚合结果的写出。[递归分区](#递归分区)会为需要再次拆分的数据增加读写。这个估算有助于比较方法，但页布局、聚合缩减和输出方式都会影响实际代价。"
+  },
+  {
+   "chunk_id": 664,
+   "seq": 53,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 8. 只需要找到同组记录时，用哈希分开处理 > 8.5 从 DISTINCT 换成 AVG，只需改变哈希表里的值",
+   "page_start": 33,
+   "page_end": 34,
+   "char_count": 740,
+   "content": "前面[去重](#去重)只记录键是否存在。改为求平均 GPA，[哈希表](#哈希表)就保存 `GroupKey → (count, sum)`：遇到已有课程编号，计数加 1，并加上该条 GPA；遇到新课程编号，创建对应状态。[分区](#分区)结束时，再把每一项的总和除以计数，输出该课程的平均 GPA。\n![PPT 第 33 页](slides/page-76.png)\n\n\n沿用第 7.2 节的输入，完整结果为：\n![PPT 第 34 页](slides/page-77.png)\n\n![PPT 第 34 页](slides/page-78.png)\n\n![PPT 第 34 页](slides/page-79.png)\n\n\n| 分组键 | [聚合状态](#聚合状态) `(count, sum)` | 最终 AVG |\n|---|---|---:|\n| 15-445 | `(2, 7.32)` | 3.66 |\n| 15-826 | `(1, 2.89)` | 2.89 |\n| 15-721 | `(1, 3.33)` | 3.33 |\n\nPPT 第 34 页把 `15-826` 与 `15-721` 的数值写成了 `3.33` 与 `2.89`，与第 25 页的[连接](#连接)输入对应关系相反。为让两种算法处理同一份数据，这里统一沿用第 25 页的对应关系。排序或哈希只改变记录的组织方式，不会改变同一组的平均值。\n\n`(count, sum)` 还有一个有用的性质：两份部分状态可以直接把计数相加、总和相加，再求最终平均值。若只保留部分平均值，却丢掉每份平均值代表多少条记录，就无法正确合并。[聚合状态](#聚合状态)的设计因此会自然延伸到后面的并行与分布式查询。"
+  },
+  {
+   "chunk_id": 665,
+   "seq": 54,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 8. 只需要找到同组记录时，用哈希分开处理 > 8.6 在整条查询里比较排序与哈希",
+   "page_start": 26,
+   "page_end": 35,
+   "char_count": 728,
+   "content": "[哈希聚合](#哈希聚合)省去了不同组之间的排序，通常适合只要求分组或[去重](#去重)的场景。[排序聚合](#排序聚合)付出了建立顺序的代价，却把顺序留给后续操作使用。选择时，需要看这份顺序是否已经存在、以后是否还会用到，以及哪一种状态更容易放进内存。\n\n| 查询与数据的特点 | 值得优先考虑的方向 | 原因 |\n|---|---|---|\n| 输入已按分组键有序 | 顺序扫描并聚合 | 直接利用已有顺序，每次只维护当前组 |\n| 输入无序，分组状态能放进内存，结果无顺序要求 | 内存[哈希聚合](#哈希聚合) | 一遍扫描即可更新各组摘要 |\n| 分组状态太大，结果无顺序要求 | [外部哈希聚合](#外部哈希聚合) | [分区](#分区)后逐个建立内存[哈希表](#哈希表) |\n| [去重](#去重)键或分组键与最终[排序键](#排序键)匹配 | 排序后聚合可能有利 | 一次排序能够服务两个需求 |\n| 分组后结果很小，但原始输入很大 | 先[哈希聚合](#哈希聚合)，再排序结果也可能更便宜 | 只排序缩减后的少量分组 |\n| `ORDER BY` 按聚合值排序，例如 `ORDER BY AVG(gpa)` | 聚合后仍需安排结果排序 | 按分组键排序无法自动提供平均值的顺序 |\n\n因此，即使 SQL 同时含有 `GROUP BY` 和 `ORDER BY`，也不能只看到“需要顺序”就决定先排序全部原始记录。假如大量输入最终缩减为几个组，先[哈希聚合](#哈希聚合)再排序这些组，可能比排序全部输入省得多。相反，如果合适的[索引](#索引)或下层[算子](#算子)已经提供分组顺序，再建一张[哈希表](#哈希表)就可能是在重复付费。"
+  },
+  {
+   "chunk_id": 666,
+   "seq": 55,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 8. 只需要找到同组记录时，用哈希分开处理 > 8.6 在整条查询里比较排序与哈希 (part 2)",
+   "page_start": 26,
+   "page_end": 35,
+   "char_count": 248,
+   "content": "个组，先[哈希聚合](#哈希聚合)再排序这些组，可能比排序全部输入省得多。相反，如果合适的[索引](#索引)或下层[算子](#算子)已经提供分组顺序，再建一张[哈希表](#哈希表)就可能是在重复付费。\n\n比较还要把实现细节算进去。[双缓冲](#双缓冲)、较大的 I/O 块和便宜的比较器会改善排序；组数、碰撞情况、[分区](#分区)是否均匀则影响哈希。算法名字只给出一类组织方法，实际胜负来自这类方法对当前数据和资源的利用程度。\n![PPT 第 35 页](slides/page-80.png)"
+  },
+  {
+   "chunk_id": 667,
+   "seq": 56,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 小结",
+   "page_start": 35,
+   "page_end": 36,
+   "char_count": 177,
+   "content": "有限内存要求查询算法把“当前必须保留什么”说清楚。Top-N 保存当前最好的候选；[外部归并排序](#外部归并排序)保存每路输入的当前[页](#页)，把更长的有序[归并段](#归并段)留在磁盘上；[排序聚合](#排序聚合)利用相邻关系，只维护当前组；[哈希聚合](#哈希聚合)则按键定位各组摘要，必要时先[分区](#分区)，让一部分组完成后就能释放状态。"
+  },
+  {
+   "chunk_id": 668,
+   "seq": 57,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 小结 (part 2)",
+   "page_start": 35,
+   "page_end": 36,
+   "char_count": 767,
+   "content": "长的有序[归并段](#归并段)留在磁盘上；[排序聚合](#排序聚合)利用相邻关系，只维护当前组；[哈希聚合](#哈希聚合)则按键定位各组摘要，必要时先[分区](#分区)，让一部分组完成后就能释放状态。\n\n这些方法反复使用同一个思路：先给数据建立一种有用的组织方式，再利用它减少后续工作。有序性让游标持续向前，哈希[分区](#分区)让同组记录集中在一起；批量顺序 I/O 减少搬运代价，[双缓冲](#双缓冲)减少计算等待。第 [13](../L13%20Opus%20查询执行%20上%20Query%20Execution%20Part%201/15-445-lecture-13-query-execution-i.md)、[14](../L14%20Opus%20并行查询引擎架构%20SpiralDB%20数据库讲座%20Parallel%20Query%20Engine%20Architectures%20SpiralDB%20Database%20Talk/15-445-lecture-14-query-execution-ii.md) 讲会把这些方法接成执行流程，第 [15](../L15%20Opus%20查询优化器%20上%20Database%20Query%20Optimizers%20Part%201/15-445-lecture-15-query-planning-and-optimization-i.md)、[16](../L16%20Astra%20查询优化%20下%20Query%20Optimization%20Part%202/15-445-lecture-16-query-planning-and-optimization-ii.md) 讲会把它们的代价变成优化器需要比较的候选方案。"
+  },
+  {
+   "chunk_id": 669,
+   "seq": 58,
+   "heading_path": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms） > 小结 (part 3)",
+   "page_start": 35,
+   "page_end": 36,
+   "char_count": 314,
+   "content": "mization%20Part%202/15-445-lecture-16-query-planning-and-optimization-ii.md) 讲会把它们的代价变成优化器需要比较的候选方案。\n\n下一讲是第 [12](../L12%20Astra%20哈希连接%20排序合并连接%20嵌套循环连接%20Hash%20Joins%20Sort%20Merge%20Joins%20Nested%20Loop%20Join%20Algorithms/15-445-lecture-12-joins-algorithms.md) 讲[连接](#连接)算法，继续考察嵌套循环连接、排序归并连接与哈希连接怎样把两路输入组合成结果。"
+  }
+ ],
+ "glossary": [
+  {
+   "glossary_id": 123,
+   "term": "数据库",
+   "term_en": "Database",
+   "definition": "一组经过组织、相互关联、用来模拟现实世界某方面的数据。",
+   "first_seen": "摘要",
+   "introduced_in": "第 1 讲"
+  },
+  {
+   "glossary_id": 124,
+   "term": "页",
+   "term_en": "Page",
+   "definition": "定长的数据块，数据库中一切数据的存放单位。",
+   "first_seen": "摘要",
+   "introduced_in": "第 3 讲"
+  },
+  {
+   "glossary_id": 125,
+   "term": "B+ 树",
+   "term_en": "B+ Tree",
+   "definition": "内部节点导航、叶节点保存真实值的有序多路平衡树。",
+   "first_seen": "摘要",
+   "introduced_in": "第 8 讲"
+  },
+  {
+   "glossary_id": 126,
+   "term": "元组",
+   "term_en": "Tuple",
+   "definition": "关系中的一个元素，即表中的一行。",
+   "first_seen": "摘要",
+   "introduced_in": "第 1 讲"
+  },
+  {
+   "glossary_id": 127,
+   "term": "访问路径",
+   "term_en": "Access Path",
+   "definition": "找到所需记录的具体方式。",
+   "first_seen": "摘要",
+   "introduced_in": "第 1 讲"
+  },
+  {
+   "glossary_id": 128,
+   "term": "哈希表",
+   "term_en": "Hash Table",
+   "definition": "用哈希函数把键映射到数组偏移量的无序关联数组。",
+   "first_seen": "摘要",
+   "introduced_in": "第 7 讲"
+  },
+  {
+   "glossary_id": 129,
+   "term": "缓冲池",
+   "term_en": "Buffer Pool",
+   "definition": "由定长帧组成的一大块内存，用来存放从磁盘读入的页。",
+   "first_seen": "课程地图",
+   "introduced_in": "第 3 讲"
+  },
+  {
+   "glossary_id": 130,
+   "term": "LSM 树",
+   "term_en": "Log-Structured Merge Tree",
+   "definition": "由 MemTable 和分层 SSTable 组成的日志结构存储结构。",
+   "first_seen": "课程地图",
+   "introduced_in": "第 5 讲"
+  },
+  {
+   "glossary_id": 131,
+   "term": "分裂",
+   "term_en": "Split",
+   "definition": "把一个满节点分成两个，并向父层补充入口。",
+   "first_seen": "课程地图",
+   "introduced_in": "第 8 讲"
+  },
+  {
+   "glossary_id": 132,
+   "term": "闩",
+   "term_en": "Latch",
+   "definition": "保护内部数据结构临界区的短期同步机制。",
+   "first_seen": "课程地图",
+   "introduced_in": "第 4 讲"
+  },
+  {
+   "glossary_id": 133,
+   "term": "物理正确性",
+   "term_en": "Physical Correctness",
+   "definition": "结构、指针与访问路径在并发操作下保持有效。",
+   "first_seen": "课程地图",
+   "introduced_in": "第 10 讲"
+  },
+  {
+   "glossary_id": 134,
+   "term": "连接",
+   "term_en": "Join",
+   "definition": "在共同属性上取值相同的元组组合。",
+   "first_seen": "课程地图",
+   "introduced_in": "第 1 讲"
+  },
+  {
+   "glossary_id": 135,
+   "term": "查询计划",
+   "term_en": "Query Plan",
+   "definition": "用算子及其数据依赖关系描述查询如何执行的树或 DAG。",
+   "first_seen": "1.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 136,
+   "term": "算子",
+   "term_en": "Operator",
+   "definition": "执行扫描、过滤、连接、排序或聚合等处理工作的节点。",
+   "first_seen": "1.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 137,
+   "term": "索引",
+   "term_en": "Index",
+   "definition": "按适合查找的方式组织键与记录定位信息的访问结构。",
+   "first_seen": "1.1",
+   "introduced_in": "第 8 讲"
+  },
+  {
+   "glossary_id": 138,
+   "term": "关系代数",
+   "term_en": "Relational Algebra",
+   "definition": "在关系上检索和操纵元组的一组基本运算。",
+   "first_seen": "1.1",
+   "introduced_in": "第 1 讲"
+  },
+  {
+   "glossary_id": 139,
+   "term": "投影",
+   "term_en": "Projection",
+   "definition": "只保留、重排或计算指定属性，对应 SQL 的 `SELECT` 列表。",
+   "first_seen": "1.1",
+   "introduced_in": "第 1 讲"
+  },
+  {
+   "glossary_id": 140,
+   "term": "溢写",
+   "term_en": "Spill",
+   "definition": "工作数据超过内存预算时，把部分数据写到临时外存。",
+   "first_seen": "1.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 141,
+   "term": "外部算法",
+   "term_en": "External Algorithm",
+   "definition": "数据超过内存时仍能执行，并考虑外存访问代价的算法。",
+   "first_seen": "1.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 142,
+   "term": "帧",
+   "term_en": "Frame",
+   "definition": "缓冲池中能放一页的位置。",
+   "first_seen": "1.2",
+   "introduced_in": "第 3 讲"
+  },
+  {
+   "glossary_id": 143,
+   "term": "关系模型",
+   "term_en": "Relational Model",
+   "definition": "以关系描述数据、以值表达联系、以声明式接口操纵数据的数据模型。",
+   "first_seen": "2.1",
+   "introduced_in": "第 1 讲"
+  },
+  {
+   "glossary_id": 144,
+   "term": "去重",
+   "term_en": "Deduplication",
+   "definition": "重复键只存一份，再关联多个记录位置。",
+   "first_seen": "2.1",
+   "introduced_in": "第 8 讲"
+  },
+  {
+   "glossary_id": 145,
+   "term": "叶节点",
+   "term_en": "Leaf Node",
+   "definition": "保存实际索引键值条目的底层节点。",
+   "first_seen": "2.1",
+   "introduced_in": "第 8 讲"
+  },
+  {
+   "glossary_id": 146,
+   "term": "基数",
+   "term_en": "Cardinality",
+   "definition": "一个属性不同取值的个数。",
+   "first_seen": "2.1",
+   "introduced_in": "第 6 讲"
+  },
+  {
+   "glossary_id": 147,
+   "term": "排序键",
+   "term_en": "Sort Key",
+   "definition": "决定记录排序次序的一列或多列属性值。",
+   "first_seen": "2.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 148,
+   "term": "早期物化",
+   "term_en": "Early Materialization",
+   "definition": "较早把元组数据放入中间记录，与键一同传递和排序。",
+   "first_seen": "2.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 149,
+   "term": "延迟物化",
+   "term_en": "Late Materialization",
+   "definition": "先传递键与记录位置，需要时再读取和组合其余属性。（本讲首次出现：2.2；引入于：[第 06 讲](../L6%20Opus%20列存数据库%20Column%20Store%20Databases/15-445-lecture-06-storage-models-and-compression.md)）",
+   "first_seen": null,
+   "introduced_in": null
+  },
+  {
+   "glossary_id": 150,
+   "term": "属性",
+   "term_en": "Attribute",
+   "definition": "关系中的一个命名分量，即表中的一列。",
+   "first_seen": "2.2",
+   "introduced_in": "第 1 讲"
+  },
+  {
+   "glossary_id": 151,
+   "term": "主键",
+   "term_en": "Primary Key",
+   "definition": "唯一标识关系中一个元组的属性或属性组合。",
+   "first_seen": "2.2",
+   "introduced_in": "第 1 讲"
+  },
+  {
+   "glossary_id": 152,
+   "term": "记录 ID",
+   "term_en": "Record ID",
+   "definition": "表示元组物理位置的唯一标识，如页 ID 加槽号。",
+   "first_seen": "2.2",
+   "introduced_in": "第 3 讲"
+  },
+  {
+   "glossary_id": 153,
+   "term": "Top-N 堆排序",
+   "term_en": "Top-N Heap Sort",
+   "definition": "扫描输入时维护最好的有限候选，再按序输出候选。",
+   "first_seen": "3.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 154,
+   "term": "外部归并排序",
+   "term_en": "External Merge Sort",
+   "definition": "先生成内存可处理的有序片段，再逐趟归并为完整有序结果。",
+   "first_seen": "4.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 155,
+   "term": "归并段",
+   "term_en": "Run",
+   "definition": "一段记录序列；有序归并段要求跨页也保持统一排序顺序。",
+   "first_seen": "4.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 156,
+   "term": "趟",
+   "term_en": "Pass",
+   "definition": "对某一层全部待处理数据的一次完整处理。",
+   "first_seen": "4.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 157,
+   "term": "排序规则",
+   "term_en": "Collation",
+   "definition": "决定字符串比较和排序结果的规则。",
+   "first_seen": "4.1",
+   "introduced_in": "第 2 讲"
+  },
+  {
+   "glossary_id": 158,
+   "term": "归并路数",
+   "term_en": "Merge Fan-in",
+   "definition": "一次归并同时处理的输入归并段数。",
+   "first_seen": "4.4",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 159,
+   "term": "物化",
+   "term_en": "Materialization",
+   "definition": "把中间结果实际计算出来并保存，供后续使用。",
+   "first_seen": "4.4",
+   "introduced_in": "第 2 讲"
+  },
+  {
+   "glossary_id": 160,
+   "term": "双缓冲",
+   "term_en": "Double Buffering",
+   "definition": "交替使用两套缓冲，让计算与后台 I/O 重叠。",
+   "first_seen": "5.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 161,
+   "term": "预取",
+   "term_en": "Pre-Fetching",
+   "definition": "根据查询计划在页被需要之前提前读入。",
+   "first_seen": "5.1",
+   "introduced_in": "第 4 讲"
+  },
+  {
+   "glossary_id": 162,
+   "term": "代码特化",
+   "term_en": "Code Specialization",
+   "definition": "为已知类型或比较规则生成、选择专用执行代码。",
+   "first_seen": "5.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 163,
+   "term": "后缀截断",
+   "term_en": "Suffix Truncation",
+   "definition": "先比较紧凑前缀，无法区分时再比较完整键。（本讲首次出现：5.2；引入于：[第 08 讲](../L8%20Astra%20B%2B树%20世界上最好的数据结构%20B%2BTrees%20The%20Best%20Data%20Structure%20in%20the%20World/15-445-lecture-08-indexes-and-filters-i.md)）",
+   "first_seen": null,
+   "introduced_in": null
+  },
+  {
+   "glossary_id": 164,
+   "term": "键规范化",
+   "term_en": "Key Normalization",
+   "definition": "把不同类型与排序规则转换成统一的保序表示。",
+   "first_seen": "5.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 165,
+   "term": "保序",
+   "term_en": "Order-preserving",
+   "definition": "编码前后的比较结果保持相同的先后关系。",
+   "first_seen": "5.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 166,
+   "term": "字节序",
+   "term_en": "Endianness",
+   "definition": "多字节数据中高低位字节的排列顺序。",
+   "first_seen": "5.2",
+   "introduced_in": "第 3 讲"
+  },
+  {
+   "glossary_id": 167,
+   "term": "字典编码",
+   "term_en": "Dictionary Encoding",
+   "definition": "用定长编码替换原值，另存编码到原值的字典。",
+   "first_seen": "5.2",
+   "introduced_in": "第 6 讲"
+  },
+  {
+   "glossary_id": 168,
+   "term": "保序编码",
+   "term_en": "Order-Preserving Encoding",
+   "definition": "编码的大小顺序与原值的排序规则一致。",
+   "first_seen": "5.2",
+   "introduced_in": "第 6 讲"
+  },
+  {
+   "glossary_id": 169,
+   "term": "聚簇索引",
+   "term_en": "Clustered Index",
+   "definition": "使表记录的存储组织跟随某个索引键顺序。",
+   "first_seen": "6.2",
+   "introduced_in": "第 8 讲"
+  },
+  {
+   "glossary_id": 170,
+   "term": "非聚簇索引",
+   "term_en": "Non-Clustered Index",
+   "definition": "索引键序与表记录存储顺序可以不同的索引。",
+   "first_seen": "6.2",
+   "introduced_in": "第 8 讲"
+  },
+  {
+   "glossary_id": 171,
+   "term": "局部性",
+   "term_en": "Locality of Reference",
+   "definition": "访问的数据在内存或磁盘上相邻，能被一次读入一并利用。",
+   "first_seen": "6.2",
+   "introduced_in": "第 9 讲"
+  },
+  {
+   "glossary_id": 172,
+   "term": "回表",
+   "term_en": "Table Lookup",
+   "definition": "根据索引中的定位信息读取表记录。",
+   "first_seen": "6.2",
+   "introduced_in": "第 8 讲"
+  },
+  {
+   "glossary_id": 173,
+   "term": "聚合算子",
+   "term_en": "Aggregation Operator",
+   "definition": "把一组记录中的相关值归约为聚合结果的执行节点。",
+   "first_seen": "7.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 174,
+   "term": "排序聚合",
+   "term_en": "Sort-based Aggregation",
+   "definition": "先让同组记录相邻，再顺序维护组的聚合状态。",
+   "first_seen": "7.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 175,
+   "term": "聚合状态",
+   "term_en": "Aggregate State / Running Value",
+   "definition": "为继续计算聚合而保留的摘要，例如平均值的计数与和。",
+   "first_seen": "7.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 176,
+   "term": "哈希聚合",
+   "term_en": "Hash Aggregation",
+   "definition": "使用分组键查找并更新哈希表中的聚合状态。",
+   "first_seen": "8.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 177,
+   "term": "外部哈希聚合",
+   "term_en": "External Hashing Aggregate",
+   "definition": "先把数据分到磁盘分区，再逐个分区做内存哈希聚合。",
+   "first_seen": "8.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 178,
+   "term": "分区",
+   "term_en": "Partition",
+   "definition": "由分派规则归到一起的一组记录，可以占据多个页。（本讲首次出现：8.2；引入于：[第 02 讲](../L2%20Opus%20现代%20SQL%20dbt%20数据库讲座%20Modern%20SQL%20dbt%20Database%20Talk/15-445-lecture-02-modern-sql.md)）",
+   "first_seen": null,
+   "introduced_in": null
+  },
+  {
+   "glossary_id": 179,
+   "term": "哈希函数",
+   "term_en": "Hash Function",
+   "definition": "把任意长度的键映射为定长整数的确定性单向函数。",
+   "first_seen": "8.2",
+   "introduced_in": "第 7 讲"
+  },
+  {
+   "glossary_id": 180,
+   "term": "再哈希",
+   "term_en": "ReHash",
+   "definition": "在外部哈希算法中，读回分区并建立内存哈希表的阶段。",
+   "first_seen": "8.3",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 181,
+   "term": "递归分区",
+   "term_en": "Recursive Partitioning",
+   "definition": "对状态仍无法放入内存的分区继续使用新规则拆分。\n\n[^topn-memory]: 原话：“The original data doesn't have to fit in memory, but I actually want my sorted heap in memory.”依据转写稿中的连续发言整理，修正了重复和语音识别错误。\n\n![PPT 第 4 页](slides/page-04.png)\n\n![PPT 第 5 页](slides/page-05.png)\n\n![PPT 第 6 页](slides/page-06.png)\n\n![PPT 第 8 页](slides/page-09.png)\n\n![PPT 第 10 页](slides/page-12.png)\n\n![PPT 第 10 页](slides/page-13.png)\n\n![PPT 第 10 页](slides/page-14.png)\n\n![PPT 第 10 页](slides/page-15.png)\n\n![PPT 第 10 页](slides/page-16.png)\n\n![PPT 第 10 页](slides/page-17.png)\n\n![PPT 第 10 页](slides/page-18.png)\n\n![PPT 第 10 页](slides/page-19.png)\n\n![PPT 第 10 页](slides/page-20.png)\n\n![PPT 第 10 页](slides/page-21.png)\n\n![PPT 第 10 页](slides/page-22.png)\n\n![PPT 第 11 页](slides/page-23.png)\n\n![PPT 第 18 页](slides/page-37.png)\n\n![PPT 第 18 页](slides/page-38.png)\n\n![PPT 第 18 页](slides/page-39.png)\n\n![PPT 第 18 页](slides/page-40.png)\n\n![PPT 第 18 页](slides/page-41.png)\n\n![PPT 第 18 页](slides/page-42.png)\n\n![PPT 第 18 页](slides/page-43.png)\n\n![PPT 第 21 页](slides/page-46.png)\n\n![PPT 第 22 页](slides/page-47.png)\n\n![PPT 第 25 页](slides/page-52.png)\n\n![PPT 第 25 页](slides/page-53.png)\n\n![PPT 第 25 页](slides/page-54.png)\n\n![PPT 第 25 页](slides/page-55.png)\n\n![PPT 第 25 页](slides/page-56.png)\n\n![PPT 第 25 页](slides/page-57.png)\n\n![PPT 第 25 页](slides/page-58.png)\n\n![PPT 第 27 页](slides/page-60.png)\n\n![PPT 第 28 页](slides/page-61.png)\n\n![PPT 第 29 页](slides/page-62.png)\n\n![PPT 第 30 页](slides/page-63.png)\n\n![PPT 第 30 页](slides/page-64.png)\n\n![PPT 第 30 页](slides/page-65.png)\n\n![PPT 第 31 页](slides/page-66.png)\n\n![PPT 第 32 页](slides/page-67.png)\n\n![PPT 第 32 页](slides/page-68.png)\n\n![PPT 第 32 页](slides/page-69.png)\n\n![PPT 第 32 页](slides/page-70.png)\n\n![PPT 第 32 页](slides/page-71.png)\n\n![PPT 第 32 页](slides/page-72.png)\n\n![PPT 第 32 页](slides/page-73.png)\n\n![PPT 第 32 页](slides/page-74.png)\n\n![PPT 第 32 页](slides/page-75.png)\n\n![PPT 第 36 页](slides/page-81.png)",
+   "first_seen": "8.4",
+   "introduced_in": "本讲"
+  }
+ ],
+ "links_out": [
+  {
+   "link_id": 850,
+   "link_text": "11",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 614,
+   "dst_title": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms）"
+  },
+  {
+   "link_id": 851,
+   "link_text": "1",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L1 Opus 关系模型与关系代数 Relational Model and Algebra/1 15-445-lecture-01-relational-model-and-algebra.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 615,
+   "dst_title": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra）"
+  },
+  {
+   "link_id": 852,
+   "link_text": "2",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 615,
+   "dst_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）"
+  },
+  {
+   "link_id": 853,
+   "link_text": "3",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L3 Opus 数据库存储 文件 页 元组 Database Storage Files Pages Tuples/15-445-lecture-03-database-storage-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 615,
+   "dst_title": "CMU 15-445 第 03 讲：数据库存储（上）（Database Storage I）"
+  },
+  {
+   "link_id": 854,
+   "link_text": "4",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-memory-management.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 615,
+   "dst_title": "CMU 15-445 第 04 讲：内存管理（Memory Management）"
+  },
+  {
+   "link_id": 855,
+   "link_text": "6",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L6 Opus 列存数据库 Column Store Databases/15-445-lecture-06-storage-models-and-compression.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 615,
+   "dst_title": "CMU 15-445 第 06 讲：存储模型与压缩（Storage Models & Compression）"
+  },
+  {
+   "link_id": 856,
+   "link_text": "7",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L7 Opus 数据库哈希表 YugabyteDB 数据库讲座 Database Hash Tables YugabyteDB Database Talk/15-445-lecture-07-hash-tables.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 616,
+   "dst_title": "CMU 15-445 第 07 讲：哈希表（Hash Tables）"
+  },
+  {
+   "link_id": 857,
+   "link_text": "8",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L8 Astra B+树 世界上最好的数据结构 B+Trees The Best Data Structure in the World/15-445-lecture-08-indexes-and-filters-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 616,
+   "dst_title": "CMU 15-445 第 08 讲：索引与过滤器（上）（Indexes & Filters I）"
+  },
+  {
+   "link_id": 858,
+   "link_text": "9",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L9 Opus 向量索引 倒排索引 跳表 布隆过滤器 Vector Indexes Inverted Indexes Skip Lists Bloom Filters/15-445-lecture-09-indexes-and-filters-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 616,
+   "dst_title": "CMU 15-445 第 09 讲：索引与过滤器（下）（Indexes & Filters II）"
+  },
+  {
+   "link_id": 859,
+   "link_text": "5",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L5 Opus 日志结构存储 SingleStore 数据库讲座 Log Structured Database Storage SingleStore Database Talk/15-445-lecture-05-database-storage-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 616,
+   "dst_title": "CMU 15-445 第 05 讲：数据库存储（下）（Database Storage II）"
+  },
+  {
+   "link_id": 860,
+   "link_text": "8",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L8 Astra B+树 世界上最好的数据结构 B+Trees The Best Data Structure in the World/15-445-lecture-08-indexes-and-filters-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 616,
+   "dst_title": "CMU 15-445 第 08 讲：索引与过滤器（上）（Indexes & Filters I）"
+  },
+  {
+   "link_id": 861,
+   "link_text": "10",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L10 Astra 数据结构中的闩锁 Latching in Data Structures/15-445-lecture-10-index-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 616,
+   "dst_title": "CMU 15-445 第 10 讲：索引并发控制（Index Concurrency Control）"
+  },
+  {
+   "link_id": 862,
+   "link_text": "12",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 617,
+   "dst_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）"
+  },
+  {
+   "link_id": 863,
+   "link_text": "13",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 617,
+   "dst_title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）"
+  },
+  {
+   "link_id": 864,
+   "link_text": "14",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 617,
+   "dst_title": "CMU 15-445 第 14 讲：查询执行（下）（Query Execution II）"
+  },
+  {
+   "link_id": 865,
+   "link_text": "15",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 617,
+   "dst_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）"
+  },
+  {
+   "link_id": 866,
+   "link_text": "16",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-query-planning-and-optimization-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 617,
+   "dst_title": "CMU 15-445 第 16 讲：查询计划与优化（下）（Query Planning & Optimization II）"
+  },
+  {
+   "link_id": 867,
+   "link_text": "1",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L1 Opus 关系模型与关系代数 Relational Model and Algebra/1 15-445-lecture-01-relational-model-and-algebra.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 619,
+   "dst_title": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra）"
+  },
+  {
+   "link_id": 868,
+   "link_text": "13",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 619,
+   "dst_title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）"
+  },
+  {
+   "link_id": 869,
+   "link_text": "14",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 619,
+   "dst_title": "CMU 15-445 第 14 讲：查询执行（下）（Query Execution II）"
+  },
+  {
+   "link_id": 870,
+   "link_text": "4",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-memory-management.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 620,
+   "dst_title": "CMU 15-445 第 04 讲：内存管理（Memory Management）"
+  },
+  {
+   "link_id": 871,
+   "link_text": "12",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 621,
+   "dst_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）"
+  },
+  {
+   "link_id": 872,
+   "link_text": "6",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L6 Opus 列存数据库 Column Store Databases/15-445-lecture-06-storage-models-and-compression.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 623,
+   "dst_title": "CMU 15-445 第 06 讲：存储模型与压缩（Storage Models & Compression）"
+  },
+  {
+   "link_id": 873,
+   "link_text": "6",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L6 Opus 列存数据库 Column Store Databases/15-445-lecture-06-storage-models-and-compression.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 624,
+   "dst_title": "CMU 15-445 第 06 讲：存储模型与压缩（Storage Models & Compression）"
+  },
+  {
+   "link_id": 874,
+   "link_text": "15",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 631,
+   "dst_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）"
+  },
+  {
+   "link_id": 875,
+   "link_text": "16",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-query-planning-and-optimization-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 631,
+   "dst_title": "CMU 15-445 第 16 讲：查询计划与优化（下）（Query Planning & Optimization II）"
+  },
+  {
+   "link_id": 876,
+   "link_text": "10",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L10 Astra 数据结构中的闩锁 Latching in Data Structures/15-445-lecture-10-index-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 642,
+   "dst_title": "CMU 15-445 第 10 讲：索引并发控制（Index Concurrency Control）"
+  },
+  {
+   "link_id": 877,
+   "link_text": "6",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L6 Opus 列存数据库 Column Store Databases/15-445-lecture-06-storage-models-and-compression.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 645,
+   "dst_title": "CMU 15-445 第 06 讲：存储模型与压缩（Storage Models & Compression）"
+  },
+  {
+   "link_id": 878,
+   "link_text": "8",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L8 Astra B+树 世界上最好的数据结构 B+Trees The Best Data Structure in the World/15-445-lecture-08-indexes-and-filters-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 647,
+   "dst_title": "CMU 15-445 第 08 讲：索引与过滤器（上）（Indexes & Filters I）"
+  },
+  {
+   "link_id": 879,
+   "link_text": "9",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L9 Opus 向量索引 倒排索引 跳表 布隆过滤器 Vector Indexes Inverted Indexes Skip Lists Bloom Filters/15-445-lecture-09-indexes-and-filters-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 647,
+   "dst_title": "CMU 15-445 第 09 讲：索引与过滤器（下）（Indexes & Filters II）"
+  },
+  {
+   "link_id": 880,
+   "link_text": "8",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L8 Astra B+树 世界上最好的数据结构 B+Trees The Best Data Structure in the World/15-445-lecture-08-indexes-and-filters-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 649,
+   "dst_title": "CMU 15-445 第 08 讲：索引与过滤器（上）（Indexes & Filters I）"
+  },
+  {
+   "link_id": 881,
+   "link_text": "9",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L9 Opus 向量索引 倒排索引 跳表 布隆过滤器 Vector Indexes Inverted Indexes Skip Lists Bloom Filters/15-445-lecture-09-indexes-and-filters-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 649,
+   "dst_title": "CMU 15-445 第 09 讲：索引与过滤器（下）（Indexes & Filters II）"
+  },
+  {
+   "link_id": 882,
+   "link_text": "12",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 653,
+   "dst_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）"
+  },
+  {
+   "link_id": 883,
+   "link_text": "13",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 654,
+   "dst_title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）"
+  },
+  {
+   "link_id": 884,
+   "link_text": "7",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L7 Opus 数据库哈希表 YugabyteDB 数据库讲座 Database Hash Tables YugabyteDB Database Talk/15-445-lecture-07-hash-tables.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 656,
+   "dst_title": "CMU 15-445 第 07 讲：哈希表（Hash Tables）"
+  },
+  {
+   "link_id": 885,
+   "link_text": "13",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 668,
+   "dst_title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）"
+  },
+  {
+   "link_id": 886,
+   "link_text": "14",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 668,
+   "dst_title": "CMU 15-445 第 14 讲：查询执行（下）（Query Execution II）"
+  },
+  {
+   "link_id": 887,
+   "link_text": "15",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 668,
+   "dst_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）"
+  },
+  {
+   "link_id": 888,
+   "link_text": "16",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-query-planning-and-optimization-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 668,
+   "dst_title": "CMU 15-445 第 16 讲：查询计划与优化（下）（Query Planning & Optimization II）"
+  },
+  {
+   "link_id": 889,
+   "link_text": "12",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 669,
+   "dst_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）"
+  }
+ ],
+ "links_in": [
+  {
+   "link_id": 71,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 17,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 204,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 49,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 261,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 64,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 351,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 88,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 352,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 88,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 354,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 89,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 355,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 89,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 356,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 90,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 357,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 90,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 358,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 90,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 359,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 91,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 360,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 91,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 361,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 91,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 362,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 92,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 363,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 92,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 364,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 92,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 366,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 93,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 367,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 93,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 368,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 93,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 369,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 94,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 370,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 94,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 371,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 94,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 373,
+   "link_text": "#11",
+   "anchor": null,
+   "src_chunk_id": 95,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 761,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 201,
+   "src_title": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L1 Opus 关系模型与关系代数 Relational Model and Algebra/1 15-445-lecture-01-relational-model-and-algebra.md"
+  },
+  {
+   "link_id": 802,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 257,
+   "src_title": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L1 Opus 关系模型与关系代数 Relational Model and Algebra/1 15-445-lecture-01-relational-model-and-algebra.md"
+  },
+  {
+   "link_id": 806,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 273,
+   "src_title": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L1 Opus 关系模型与关系代数 Relational Model and Algebra/1 15-445-lecture-01-relational-model-and-algebra.md"
+  },
+  {
+   "link_id": 822,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 395,
+   "src_title": "CMU 15-445 第 10 讲：索引并发控制（Index Concurrency Control）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L10 Astra 数据结构中的闩锁 Latching in Data Structures/15-445-lecture-10-index-concurrency-control.md"
+  },
+  {
+   "link_id": 849,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 448,
+   "src_title": "CMU 15-445 第 10 讲：索引并发控制（Index Concurrency Control）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L10 Astra 数据结构中的闩锁 Latching in Data Structures/15-445-lecture-10-index-concurrency-control.md"
+  },
+  {
+   "link_id": 850,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 614,
+   "src_title": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md"
+  },
+  {
+   "link_id": 896,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 828,
+   "src_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md"
+  },
+  {
+   "link_id": 898,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 828,
+   "src_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md"
+  },
+  {
+   "link_id": 908,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 834,
+   "src_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md"
+  },
+  {
+   "link_id": 909,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 835,
+   "src_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md"
+  },
+  {
+   "link_id": 915,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 852,
+   "src_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md"
+  },
+  {
+   "link_id": 916,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 858,
+   "src_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md"
+  },
+  {
+   "link_id": 924,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 872,
+   "src_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md"
+  },
+  {
+   "link_id": 925,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 876,
+   "src_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md"
+  },
+  {
+   "link_id": 937,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 1042,
+   "src_title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md"
+  },
+  {
+   "link_id": 948,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 1044,
+   "src_title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md"
+  },
+  {
+   "link_id": 951,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 1047,
+   "src_title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md"
+  },
+  {
+   "link_id": 952,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 1047,
+   "src_title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md"
+  },
+  {
+   "link_id": 987,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 1281,
+   "src_title": "CMU 15-445 第 14 讲：查询执行（下）（Query Execution II）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md"
+  },
+  {
+   "link_id": 1014,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 1311,
+   "src_title": "CMU 15-445 第 14 讲：查询执行（下）（Query Execution II）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md"
+  },
+  {
+   "link_id": 1018,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 1314,
+   "src_title": "CMU 15-445 第 14 讲：查询执行（下）（Query Execution II）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md"
+  },
+  {
+   "link_id": 1036,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 1493,
+   "src_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md"
+  },
+  {
+   "link_id": 1046,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 1496,
+   "src_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md"
+  },
+  {
+   "link_id": 1084,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 1735,
+   "src_title": "CMU 15-445 第 16 讲：查询计划与优化（下）（Query Planning & Optimization II）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-query-planning-and-optimization-ii.md"
+  },
+  {
+   "link_id": 1098,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 1745,
+   "src_title": "CMU 15-445 第 16 讲：查询计划与优化（下）（Query Planning & Optimization II）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-query-planning-and-optimization-ii.md"
+  },
+  {
+   "link_id": 1111,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 1945,
+   "src_title": "CMU 15-445 第 17 讲：并发控制理论（Concurrency Control Theory）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L17 Astra 并发控制理论 Concurrency Control Theory/15-445-lecture-17-concurrency-control-theory.md"
+  },
+  {
+   "link_id": 1228,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 2484,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1240,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 2493,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1243,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 2495,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1248,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 2507,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1256,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 2571,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1464,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 3873,
+   "src_title": "CMU 15-445 第 25 讲：期末复习与系统杂谈（Final Review + Systems Potpourri）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L25 Opus 高级数据库速览 RelationalAI 数据库讲座 Advanced Databases Speed Run RelationalAI Database Talk/15-445-lecture-25-final-review-and-systems-potpourri.md"
+  },
+  {
+   "link_id": 1517,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 4011,
+   "src_title": "CMU 15-445 第 03 讲：数据库存储（上）（Database Storage I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L3 Opus 数据库存储 文件 页 元组 Database Storage Files Pages Tuples/15-445-lecture-03-database-storage-i.md"
+  },
+  {
+   "link_id": 1563,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 4248,
+   "src_title": "CMU 15-445 第 04 讲：内存管理（Memory Management）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-memory-management.md"
+  },
+  {
+   "link_id": 1577,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 4258,
+   "src_title": "CMU 15-445 第 04 讲：内存管理（Memory Management）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-memory-management.md"
+  },
+  {
+   "link_id": 1599,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 4327,
+   "src_title": "CMU 15-445 第 04 讲：内存管理（Memory Management）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-memory-management.md"
+  },
+  {
+   "link_id": 1605,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 4329,
+   "src_title": "CMU 15-445 第 04 讲：内存管理（Memory Management）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-memory-management.md"
+  },
+  {
+   "link_id": 1616,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 4507,
+   "src_title": "CMU 15-445 第 05 讲：数据库存储（下）（Database Storage II）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L5 Opus 日志结构存储 SingleStore 数据库讲座 Log Structured Database Storage SingleStore Database Talk/15-445-lecture-05-database-storage-ii.md"
+  },
+  {
+   "link_id": 1653,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 4545,
+   "src_title": "CMU 15-445 第 05 讲：数据库存储（下）（Database Storage II）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L5 Opus 日志结构存储 SingleStore 数据库讲座 Log Structured Database Storage SingleStore Database Talk/15-445-lecture-05-database-storage-ii.md"
+  },
+  {
+   "link_id": 1661,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 4558,
+   "src_title": "CMU 15-445 第 05 讲：数据库存储（下）（Database Storage II）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L5 Opus 日志结构存储 SingleStore 数据库讲座 Log Structured Database Storage SingleStore Database Talk/15-445-lecture-05-database-storage-ii.md"
+  },
+  {
+   "link_id": 1713,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 4941,
+   "src_title": "CMU 15-445 第 07 讲：哈希表（Hash Tables）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L7 Opus 数据库哈希表 YugabyteDB 数据库讲座 Database Hash Tables YugabyteDB Database Talk/15-445-lecture-07-hash-tables.md"
+  },
+  {
+   "link_id": 1737,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 5009,
+   "src_title": "CMU 15-445 第 07 讲：哈希表（Hash Tables）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L7 Opus 数据库哈希表 YugabyteDB 数据库讲座 Database Hash Tables YugabyteDB Database Talk/15-445-lecture-07-hash-tables.md"
+  },
+  {
+   "link_id": 1748,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 5168,
+   "src_title": "CMU 15-445 第 08 讲：索引与过滤器（上）（Indexes & Filters I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L8 Astra B+树 世界上最好的数据结构 B+Trees The Best Data Structure in the World/15-445-lecture-08-indexes-and-filters-i.md"
+  },
+  {
+   "link_id": 1769,
+   "link_text": "11",
+   "anchor": null,
+   "src_chunk_id": 5224,
+   "src_title": "CMU 15-445 第 08 讲：索引与过滤器（上）（Indexes & Filters I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L8 Astra B+树 世界上最好的数据结构 B+Trees The Best Data Structure in the World/15-445-lecture-08-indexes-and-filters-i.md"
+  }
+ ]
+}

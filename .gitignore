@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 可再生的嵌入缓存（约 26MB，ingest.py 运行时自动重建）
+*.npy
+
+# 环境与密钥
+.env
+*.key
+*.pem
+
+# 日志与临时文件
+logs/
+*.log
+.tmp/
+
+# Qoder Sites 部署描述符（工具私有，含站点/项目 ID 与恢复记录，不入公开仓库）
+*.qoder.site
+
+# 操作系统
+.DS_Store
+Thumbs.db

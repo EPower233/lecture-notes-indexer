@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>讲义库索引器 · 检索（公开示例）</title>
+<meta name="description" content="基于 seekdb 向量+全文单 SQL 混合检索的讲义库检索工具 · Qoder × OceanBase Build with Qoder 参赛作品（公开示例站，内置本机 seekdb 实测快照）">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <span class="logo">讲义库<span class="dot">索引器</span></span>
+  <span id="apiDot" class="pill gray">加载快照…</span>
+  <span class="spacer"></span>
+  <a href="about.html" class="btn ghost small">关于 / 架构</a>
+  <span id="stats" class="stat-pills"></span>
+</div>
+
+<div class="wrap">
+  <div class="demo-banner">
+    <strong>公开示例站</strong>：内置从本机 <b>live seekdb 实测抓取</b>的真实检索快照（非编造）。
+    Qoder Sites 的后端是 Supabase/Deno，跑不了 seekdb 的单 SQL 向量+全文融合、也装不了 bge 模型，
+    所以这里只演示预置查询；<b>自由输入的在线混合检索需在本机运行检索栈</b>——
+    见 <a href="https://github.com/EPower233/lecture-notes-indexer" target="_blank" rel="noopener">GitHub 仓库</a> 的运行说明。
+  </div>
+
+  <div class="searchbox">
+    <div class="searchrow">
+      <input id="q" type="text" placeholder="点下方预置查询查看真实 seekdb 结果，或输入后回车（示例站仅内置查询有快照）" autofocus>
+      <select id="mode" title="检索模式">
+        <option value="hybrid" selected>混合检索</option>
+        <option value="vector">向量语义</option>
+        <option value="fts">全文关键词</option>
+      </select>
+      <button id="go" class="btn">检索</button>
+    </div>
+    <div id="presets" class="presets"></div>
+    <div class="filters">
+      <label>课程
+        <select id="course"><option value="">全部</option></select>
+      </label>
+      <label>类型
+        <select id="kind">
+          <option value="">全部</option>
+          <option value="lecture">讲义</option>
+          <option value="transcript">转写稿</option>
+          <option value="other">其他</option>
+        </select>
+      </label>
+      <label>讲次 <input id="lecture" type="number" min="1" max="99" style="width:64px" placeholder="不限"></label>
+      <label id="alphaWrap">向量权重 α <input id="alpha" type="range" min="0" max="1" step="0.1" value="0.5"><span class="val" id="alphaVal">0.5</span></label>
+      <label>条数 <input id="k" type="number" min="1" max="50" value="6" style="width:64px"></label>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;align-items:center">
+    <input id="termQ" type="text" placeholder="术语速查：输入术语名，如 时间戳 / 死锁 / 分布函数" style="flex:1;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:14px">
+    <button id="termGo" class="btn ghost">查术语</button>
+  </div>
+  <div id="termChips" class="presets"></div>
+  <div id="termResults"></div>
+
+  <div id="resultHead" class="section-title" style="display:none"></div>
+  <div id="results"></div>
+
+  <div class="section-title">浏览笔记</div>
+  <div class="filters" style="margin:0 0 10px">
+    <label>课程 <select id="browseCourse"><option value="">全部</option></select></label>
+    <label>类型
+      <select id="browseKind">
+        <option value="">全部</option>
+        <option value="lecture">讲义</option>
+        <option value="transcript">转写稿</option>
+        <option value="other">其他</option>
+      </select>
+    </label>
+    <label style="align-self:center"><input id="onlyCaptured" type="checkbox" checked> 只看示例已内置详情的笔记</label>
+  </div>
+  <div id="browseList"></div>
+</div>
+
+<script src="md.js"></script>
+<script src="snapshot.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+// 快照模式：用 snapshot.js 的替身；若缺失则回退到真实 fetch（本机 live 栈）
+const api = window.apiSnapshot || ((path) => fetch(path).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }));
+const DEMO = !!window.SNAPSHOT_MODE;
+
+function words(q) {
+  return q.toLowerCase().split(/[\s,，。？?！!、;；:：]+/).filter(w => w.length >= 2);
+}
+
+async function init() {
+  try {
+    const [stats, courses] = await Promise.all([api("/api/stats"), api("/api/courses")]);
+    $("apiDot").textContent = DEMO ? "示例快照 · 本机 seekdb 实测" : "seekdb 已连接";
+    $("apiDot").className = "pill " + (DEMO ? "warn" : "ok");
+    $("stats").innerHTML =
+      `<span class="pill">${stats.notes} 篇笔记</span>` +
+      `<span class="pill">${stats.chunks} 个切片</span>` +
+      `<span class="pill">${stats.glossary} 条术语</span>` +
+      `<span class="pill">${stats.links} 条链接</span>`;
+    for (const sel of [$("course"), $("browseCourse")]) {
+      for (const c of courses.courses) {
+        if (!c.course) continue;
+        const o = document.createElement("option");
+        o.value = c.course; o.textContent = `${c.course} (${c.notes})`;
+        sel.appendChild(o);
+      }
+    }
+  } catch (e) {
+    $("apiDot").textContent = "快照加载失败";
+    $("apiDot").className = "pill bad";
+  }
+  if (DEMO && window.snapshotMeta) {
+    const m = await window.snapshotMeta();
+    $("presets").innerHTML = '<span class="plabel">预置查询（真实结果）：</span>' +
+      m.presets.map(p => `<button class="chip" data-q="${esc(p.q)}">${esc(p.q)}</button>`).join("") +
+      `<button class="chip alt" data-q="两阶段锁的死锁怎么检测和处理" data-mode="vector">同一查询·向量模式</button>` +
+      `<button class="chip alt" data-q="两阶段锁的死锁怎么检测和处理" data-mode="fts">同一查询·全文模式</button>`;
+    $("termChips").innerHTML = '<span class="plabel">术语示例：</span>' +
+      m.terms.map(t => `<button class="chip term" data-t="${esc(t)}">${esc(t)}</button>`).join("");
+  }
+  loadBrowse();
+}
+
+async function doSearch() {
+  const q = $("q").value.trim();
+  if (!q) return;
+  const p = new URLSearchParams({ q, mode: $("mode").value, k: $("k").value, alpha: $("alpha").value });
+  if ($("course").value) p.set("course", $("course").value);
+  if ($("kind").value) p.set("kind", $("kind").value);
+  if ($("lecture").value) p.set("lecture", $("lecture").value);
+  $("results").innerHTML = '<div class="loading">检索中…</div>';
+  $("resultHead").style.display = "none";
+  try {
+    const d = await api("/api/search?" + p);
+    $("resultHead").style.display = "block";
+    if (d.demoMiss) {
+      $("resultHead").textContent = `「${q}」 ${d.mode} 模式`;
+      $("results").innerHTML = `<div class="empty">示例站没有为这条自由输入的查询内置快照。<br>
+        在线混合检索（查询实时向量化 + seekdb 单 SQL 融合打分）需在<b>本机检索栈</b>运行——
+        见 <a href="https://github.com/EPower233/lecture-notes-indexer" target="_blank" rel="noopener">GitHub 运行说明</a>。<br>
+        或点上方<b>预置查询</b>查看已抓取的真实 seekdb 结果。</div>`;
+      return;
+    }
+    $("resultHead").textContent = `「${q}」 ${d.mode} 模式 · ${d.count} 条结果` +
+      (DEMO ? "（本机 seekdb 实测快照）" : "");
+    const ws = words(q);
+    $("results").innerHTML = d.results.map((r, i) => {
+      const chips = [];
+      if (r.score != null) chips.push(`<span class="badge score">score ${r.score.toFixed(4)}</span>`);
+      if (r.dist != null) chips.push(`<span class="badge">d=${r.dist.toFixed(3)}</span>`);
+      if (r.rel != null) chips.push(`<span class="badge">rel=${r.rel.toFixed(2)}</span>`);
+      const course = r.course ? `<span class="badge course">${esc(r.course)}</span>` : "";
+      const lec = r.lecture_no != null ? `<span class="badge lec">L${r.lecture_no}</span>` : "";
+      const kind = `<span class="badge kind">${{lecture:"讲义",transcript:"转写稿",other:"其他"}[r.kind]||r.kind}</span>`;
+      const page = r.page_start ? `<span class="badge page">PPT p${r.page_start}${r.page_end && r.page_end!==r.page_start ? "–"+r.page_end : ""}</span>` : "";
+      return `<a class="result" href="note.html?id=${r.note_id}&chunk=${r.chunk_id}">
+        <div class="rhead"><span class="badge">${i+1}</span>${chips.join("")}${course}${lec}${kind}${page}</div>
+        <div class="hpath">${esc(r.heading_path || "")}</div>
+        <div class="snippet">${highlight(r.snippet, ws)}</div>
+      </a>`;
+    }).join("") || '<div class="empty">没有命中结果</div>';
+  } catch (e) {
+    $("results").innerHTML = `<div class="empty">检索失败：${esc(String(e))}</div>`;
+  }
+}
+
+async function doTerm() {
+  const t = $("termQ").value.trim();
+  if (!t) return;
+  $("termResults").innerHTML = '<div class="loading">查询中…</div>';
+  const d = await api("/api/term?t=" + encodeURIComponent(t) + "&k=10");
+  $("termResults").innerHTML = d.results.map(g => `
+    <div class="termcard">
+      <span class="t">${esc(g.term)}</span><span class="en">${esc(g.term_en || "")}</span>
+      <div>${esc(g.definition || "")}</div>
+      <div class="src">${esc(g.course || "")} · L${g.lecture_no ?? "?"} · 引入于 ${esc(g.introduced_in || "?")} ·
+        <a href="note.html?path=${encodeURIComponent(g.rel_path)}">查看出处</a></div>
+    </div>`).join("") || `<div class="empty">示例快照未收录「${esc(t)}」${DEMO ? "（示例内置少量术语，完整术语表需本机栈）" : ""}</div>`;
+}
+
+async function loadBrowse() {
+  const p = new URLSearchParams();
+  if ($("browseCourse").value) p.set("course", $("browseCourse").value);
+  if ($("browseKind").value) p.set("kind", $("browseKind").value);
+  const d = await api("/api/notes?" + p);
+  let notes = d.notes;
+  if (DEMO && $("onlyCaptured").checked) notes = notes.filter(n => n.captured);
+  const byCourse = {};
+  for (const n of notes) (byCourse[n.course || "(未分组)"] ??= []).push(n);
+  $("browseList").innerHTML = Object.entries(byCourse).map(([c, ns]) => `
+    <details ${Object.keys(byCourse).length === 1 ? "open" : ""}>
+      <summary style="cursor:pointer;font-weight:600;padding:6px 0">${esc(c)} <span class="badge">${ns.length}</span></summary>
+      <div style="padding:4px 0 8px 14px">
+        ${ns.map(n => `<div style="padding:2px 0">
+          <a href="note.html?id=${n.note_id}">${esc(n.title || n.rel_path)}</a>
+          <span class="badge" style="margin-left:6px">${{lecture:"讲义",transcript:"转写稿",other:"其他"}[n.kind]||n.kind}</span>
+        </div>`).join("")}
+      </div>
+    </details>`).join("") || '<div class="empty">无匹配笔记</div>';
+}
+
+$("go").addEventListener("click", doSearch);
+$("q").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+$("termGo").addEventListener("click", doTerm);
+$("termQ").addEventListener("keydown", e => { if (e.key === "Enter") doTerm(); });
+$("alpha").addEventListener("input", () => $("alphaVal").textContent = $("alpha").value);
+$("mode").addEventListener("change", () =>
+  $("alphaWrap").style.display = $("mode").value === "hybrid" ? "" : "none");
+$("browseCourse").addEventListener("change", loadBrowse);
+$("browseKind").addEventListener("change", loadBrowse);
+$("onlyCaptured").addEventListener("change", loadBrowse);
+document.addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  if (chip.classList.contains("term")) { $("termQ").value = chip.dataset.t; doTerm(); return; }
+  $("q").value = chip.dataset.q;
+  if (chip.dataset.mode) { $("mode").value = chip.dataset.mode; $("mode").dispatchEvent(new Event("change")); }
+  else { $("mode").value = "hybrid"; $("mode").dispatchEvent(new Event("change")); }
+  doSearch();
+});
+const sp = new URLSearchParams(location.search);
+if (sp.get("q")) { $("q").value = sp.get("q"); }
+init().then(() => { if (sp.get("q")) doSearch(); });
+</script>
+</body>
+</html>

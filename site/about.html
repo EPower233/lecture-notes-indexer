@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>关于 / 架构 · 讲义库索引器</title>
+<meta name="description" content="讲义库索引器的架构、seekdb 单 SQL 向量+全文混合融合、EXPLAIN 证据与交付物 · Qoder × OceanBase Build with Qoder 参赛作品">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html" class="btn ghost small">← 检索</a>
+  <span class="logo">讲义库<span class="dot">索引器</span></span>
+  <span class="spacer"></span>
+  <span class="pill warn">公开示例站</span>
+</div>
+
+<div class="about">
+  <h1>讲义库索引器 · 关于与架构</h1>
+  <p class="lead">
+    基于 <b>seekdb</b>（OceanBase AI 原生数据库）<b>向量 + 全文单 SQL 混合检索</b>的本地讲义库检索与浏览工具。
+    参赛作品 · 赛题 <b>Qoder × OceanBase「Build with Qoder」</b> · 全程用 <b>Qoder</b> 开发。
+  </p>
+  <div class="btnrow">
+    <a class="btn" href="index.html">进入检索示例</a>
+    <a class="btn ghost" href="https://github.com/EPower233/lecture-notes-indexer" target="_blank" rel="noopener">GitHub 源码仓库</a>
+    <a class="btn ghost" href="https://github.com/EPower233/lecture-notes-indexer/tree/master/docs" target="_blank" rel="noopener">开发记录 / 验证样例</a>
+  </div>
+
+  <div class="card">
+    <b>为什么这个站只有"示例快照"？</b>
+    Qoder Sites 的托管后端是 <b>Supabase(PostgreSQL) + Deno 云函数</b>，跑不了 seekdb 的
+    <code>VECTOR + ik MATCH() AGAINST</code> 单 SQL 融合，云函数也装不了 Python 的 bge 嵌入模型。
+    因此公开站内置的是从<b>本机 live seekdb 实测抓取</b>的真实结果快照；完整的在线混合检索请在本机运行检索栈（见仓库运行说明）。
+    这样既满足"公网可达的展示站"，又不牺牲"实质性使用 seekdb"这个核心。
+  </div>
+
+  <h2>数据规模</h2>
+  <div class="metric">
+    <div class="m"><div class="n">96</div><div class="l">篇讲义笔记</div></div>
+    <div class="m"><div class="n">7,201</div><div class="l">个检索切片(chunk)</div></div>
+    <div class="m"><div class="n">1,831</div><div class="l">条术语(glossary)</div></div>
+    <div class="m"><div class="n">1,811</div><div class="l">条双链(link)</div></div>
+    <div class="m"><div class="n">512</div><div class="l">向量维度</div></div>
+  </div>
+  <p>覆盖 CMU 15-445（数据库系统）与 Mathematics（概率论与数理统计）双语讲义；该子集内跨笔记链接 1811/1811 全部有效。公开展示仅含这两类课程。</p>
+
+  <h2>核心：混合检索在 seekdb 单条 SQL 内完成</h2>
+  <p>
+    全文相关度 <code>MATCH()</code> 与向量距离 <code>l2_distance()</code> 在<b>同一条 SQL</b> 内加权融合排序，
+    结构化过滤（课程 / 类型 / 讲次）也在同条 SQL 下推——<b>绝不把向量检索与全文检索拆到客户端拼接</b>。
+  </p>
+  <div class="formula">
+score = <span class="hl">(1-α)</span> · rel/(1+rel) + <span class="hl">α</span> · 1/(1+dist)<br>
+&nbsp;&nbsp;rel&nbsp; = MATCH(c.content) AGAINST (%s)&nbsp;&nbsp;<span style="color:#94a3b8">-- ik 全文相关度，自然语言模式</span><br>
+&nbsp;&nbsp;dist = l2_distance(c.emb, %s)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">-- 512 维向量 L2 距离</span><br>
+&nbsp;&nbsp;α&nbsp;&nbsp;&nbsp; = 向量分权重（默认 0.5，前端可调）
+  </div>
+  <p>
+    两个分量各自归一化到 <code>(0,1)</code> 再加权，避免全文分（无界）与向量分（距离）量纲冲突。
+    全文侧用 <b>NATURAL LANGUAGE 模式</b>而非 BOOLEAN 模式：ik 对查询侧自动分词，中文召回显著更好
+    （BOOLEAN 模式下"版本链"这类复合词召回为 0）。
+  </p>
+
+  <h3>建表 DDL（节选）</h3>
+  <pre><code>CREATE TABLE vault.chunks (
+  chunk_id BIGINT PRIMARY KEY, note_id BIGINT, seq INT,
+  heading_path VARCHAR(768), content TEXT,
+  page_start INT, page_end INT, char_count INT,
+  emb VECTOR(512),
+  FULLTEXT INDEX ft_chunks_content (content) WITH PARSER ik,
+  VECTOR INDEX vidx_chunks_emb (emb) WITH (DISTANCE=l2, TYPE=hnsw, LIB=vsag)
+) ORGANIZATION = HEAP;</code></pre>
+
+  <h2>EXPLAIN 证据：确实用上了向量与全文索引</h2>
+  <p>以下为对 live seekdb 实测 <code>EXPLAIN</code> 的结果，证明融合发生在数据库内、且命中专用索引：</p>
+  <table>
+    <tr><th>查询形态</th><th>执行计划算子</th><th>说明 / 实测</th></tr>
+    <tr>
+      <td><code>WHERE MATCH(content) AGAINST(…)</code></td>
+      <td><code>TEXT RETRIEVAL SCAN(ft_chunks_content)</code></td>
+      <td>命中 ik 全文索引，<code>calc_relevance=true</code></td>
+    </tr>
+    <tr>
+      <td><code>ORDER BY l2_distance(emb,…) LIMIT</code></td>
+      <td><code>TOP-N SORT</code> + <code>TABLE FULL SCAN</code></td>
+      <td>精确 KNN（无 ANN），EST.TIME ≈ <b>1433µs</b>；万行级数据下结果最准</td>
+    </tr>
+    <tr>
+      <td><code>ORDER BY l2_distance(emb,…) APPROXIMATE LIMIT</code></td>
+      <td><code>VECTOR INDEX SCAN(vidx_chunks_emb)</code></td>
+      <td>启用 HNSW 近似，EST.TIME ≈ <b>9µs</b>（约 <b>150×</b> 提速）；超大规模时的可选优化</td>
+    </tr>
+    <tr>
+      <td>混合融合（本项目默认）</td>
+      <td><code>MERGE JOIN</code> + 融合分 <code>TOP-N SORT</code></td>
+      <td>单条 SQL 内完成向量分与全文分的融合排序——in-DB fusion 的直接证据</td>
+    </tr>
+  </table>
+
+  <h2>技术栈</h2>
+  <div>
+    <span class="tag">seekdb v1.4.0.0（MySQL 协议）</span>
+    <span class="tag">Docker Desktop · 宿主 20881→2881</span>
+    <span class="tag">VECTOR(512) + HNSW(vsag)</span>
+    <span class="tag">FULLTEXT · ik smart</span>
+    <span class="tag">BAAI/bge-small-zh-v1.5</span>
+    <span class="tag">FastAPI + pymysql</span>
+    <span class="tag">原生 HTML/CSS/JS 前端</span>
+    <span class="tag">Qoder 全程开发</span>
+  </div>
+  <p style="margin-top:10px">
+    嵌入模型 <code>bge-small-zh-v1.5</code>（512 维、CPU、归一化）本机运行；查询侧加前缀
+    <code>"为这个句子生成表示以用于检索相关文章："</code> 以匹配该模型的检索指令。
+    seekdb 部署在 Windows Docker，宿主端口取 <b>20881</b>——因为 Windows Hyper-V 保留了 TCP 2791–2890，2881/2886 无法在宿主绑定。
+  </p>
+
+  <h2>检索管线</h2>
+  <div class="card">
+    Obsidian vault（只读）→ <b>ingest.py</b> 解析/切块/向量化 → 写入 seekdb（notes / chunks / glossary / links）
+    → <b>search.py</b> 单 SQL 混合融合 → <b>serve.py</b>（FastAPI HTTP）→ Web UI（检索页 + 笔记浏览页）。
+    数据源目录全程<b>只读</b>，PPT 截图经 <code>/api/vault-file</code> 只读代理并防目录穿越。
+  </div>
+
+  <h2>为什么用 seekdb 而非 PowerContext</h2>
+  <p>
+    赛题要求"实质性使用 seekdb <b>或</b> PowerContext"。二者定位不同：
+    <b>seekdb</b> 是 AI 原生向量+关系混合数据库，正是本项目"讲义混合检索"的直接底座；
+    <b>PowerContext</b> 是面向 Agent 的<b>跨会话上下文/记忆</b>服务（Memory/Handoff/Experience），解决的是"工作交接时上下文丢失"，
+    与"文档检索"不是同一问题，硬接入只会增加依赖而无产品价值。
+    故本作选 <b>seekdb</b>，并把它用在最能体现其价值的地方——单 SQL 向量+全文融合、EXPLAIN 可证。
+  </p>
+
+  <h2>交付物对照</h2>
+  <table>
+    <tr><th>赛题要求</th><th>状态</th><th>位置</th></tr>
+    <tr><td>用 Qoder 开发</td><td>✓</td><td>全程 Qoder Desktop Agent 驱动</td></tr>
+    <tr><td>实质性使用 seekdb</td><td>✓</td><td>单 SQL 向量+ik 全文融合，EXPLAIN 可证</td></tr>
+    <tr><td>公开网站（Qoder Sites）</td><td>✓</td><td>本站（静态展示 + 真实快照）</td></tr>
+    <tr><td>源码仓库</td><td>✓</td><td><a href="https://github.com/EPower233/lecture-notes-indexer" target="_blank" rel="noopener">GitHub</a></td></tr>
+    <tr><td>运行说明</td><td>✓</td><td>README + 验证样例 §0</td></tr>
+    <tr><td>验证样例</td><td>✓</td><td>docs/验证样例.md（真实输出）</td></tr>
+    <tr><td>Qoder 开发记录（含 UID）</td><td>✓</td><td>docs/开发记录.md · UID <code>01a17eae-7f89-791d-b7fc-44d737d1b96d</code></td></tr>
+    <tr><td>不含真实凭据</td><td>✓</td><td>root 空密码、仅本机；全项目无外部密钥</td></tr>
+  </table>
+
+  <h2>本机运行（复现完整在线检索）</h2>
+  <pre><code># 1) 启动 seekdb（Docker，宿主端口 20881）
+docker start seekdb
+# 2) 建表
+mysql -h127.0.0.1 -P20881 -uroot &lt; schema.sql
+# 3) 入库（解析 vault + 向量化）
+py -3.10 ingest.py
+# 4) 起服务（含前端 /ui）
+py -3.10 -m uvicorn serve:app --host 127.0.0.1 --port 8000
+# 打开 http://127.0.0.1:8000/ui/</code></pre>
+  <p class="lead" style="margin-top:24px">
+    完整细节见 <a href="https://github.com/EPower233/lecture-notes-indexer" target="_blank" rel="noopener">GitHub 仓库</a> 的
+    README、<code>docs/开发记录.md</code> 与 <code>docs/验证样例.md</code>。
+  </p>
+</div>
+</body>
+</html>

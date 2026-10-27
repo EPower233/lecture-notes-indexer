@@ -1,0 +1,384 @@
+{
+ "terms": [
+  {
+   "t": "时间戳",
+   "results": [
+    {
+     "glossary_id": 624,
+     "term": "时间戳",
+     "term_en": "Timestamp",
+     "definition": "用来建立事务先后关系的有序标识；此处用于决定等待优先级。",
+     "introduced_in": "本讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 18,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L18 Astra 两阶段封锁事务 Firebolt 数据库讲座 Transactions with Two Phase Locking Firebolt Database Talk/15-445-lecture-18-two-phase-locking-concurrency-control.md"
+    },
+    {
+     "glossary_id": 675,
+     "term": "时间戳",
+     "term_en": "Timestamp",
+     "definition": "用来建立事务先后关系的有序标识；此处用于决定等待优先级。",
+     "introduced_in": "第 18 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 19,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L19 Opus 时间戳排序并发控制 Timestamp Ordering Concurrency Control/15-445-lecture-19-timestamp-ordering-concurrency-control.md"
+    },
+    {
+     "glossary_id": 801,
+     "term": "时间戳",
+     "term_en": "Timestamp",
+     "definition": "用来建立事务先后关系的有序标识；此处用于决定等待优先级。",
+     "introduced_in": "第 18 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 20,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L20 Opus 多版本并发控制 MVCC Multi Version Concurrency Control/15-445-lecture-20-multi-version-concurrency-control.md"
+    },
+    {
+     "glossary_id": 928,
+     "term": "时间戳",
+     "term_en": "Timestamp",
+     "definition": "用来建立事务先后关系的有序标识；此处用于决定等待优先级。",
+     "introduced_in": "第 18 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 21,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L21 Opus 预写日志与影子分页 Write Ahead Logging and Shadow Paging/15-445-lecture-21-database-logging.md"
+    },
+    {
+     "glossary_id": 974,
+     "term": "时间戳",
+     "term_en": "Timestamp",
+     "definition": "用来建立事务先后关系的有序标识；此处用于决定等待优先级。",
+     "introduced_in": "第 18 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 22,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L22 Astra 数据库恢复 ClickHouse 数据库讲座 Database Recovery ClickHouse Database Talk/15-445-lecture-22-database-recovery.md"
+    },
+    {
+     "glossary_id": 1021,
+     "term": "时间戳",
+     "term_en": "Timestamp",
+     "definition": "用来建立事务先后关系的有序标识；此处用于决定等待优先级。",
+     "introduced_in": "第 18 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 23,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L23 Opus 分布式数据库 上 Distributed Databases Pt 1/15-445-lecture-23-distributed-database-systems-i.md"
+    }
+   ]
+  },
+  {
+   "t": "死锁",
+   "results": [
+    {
+     "glossary_id": 99,
+     "term": "死锁",
+     "term_en": "Deadlock",
+     "definition": "工作者互相等待对方的资源，形成无法前进的环。",
+     "introduced_in": "本讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 10,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L10 Astra 数据结构中的闩锁 Latching in Data Structures/15-445-lecture-10-index-concurrency-control.md"
+    },
+    {
+     "glossary_id": 598,
+     "term": "死锁",
+     "term_en": "Deadlock",
+     "definition": "工作者互相等待对方的资源，形成无法前进的环。",
+     "introduced_in": "第 10 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 17,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L17 Astra 并发控制理论 Concurrency Control Theory/15-445-lecture-17-concurrency-control-theory.md"
+    },
+    {
+     "glossary_id": 617,
+     "term": "死锁",
+     "term_en": "Deadlock",
+     "definition": "事务形成循环等待，没有参与者能够独立继续。（本讲首次出现：§4.1；引入于：[第 10 讲](../L10%20Astra%20数据结构中的闩锁%20Latching%20in%20Data%20Structures/15-445-lecture-10-index-concurrency-control.md)）",
+     "introduced_in": null,
+     "course": "CMU15445_Final",
+     "lecture_no": 18,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L18 Astra 两阶段封锁事务 Firebolt 数据库讲座 Transactions with Two Phase Locking Firebolt Database Talk/15-445-lecture-18-two-phase-locking-concurrency-control.md"
+    },
+    {
+     "glossary_id": 714,
+     "term": "死锁",
+     "term_en": "Deadlock",
+     "definition": "事务形成循环等待，没有参与者能够独立继续。",
+     "introduced_in": "第 10 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 19,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L19 Opus 时间戳排序并发控制 Timestamp Ordering Concurrency Control/15-445-lecture-19-timestamp-ordering-concurrency-control.md"
+    },
+    {
+     "glossary_id": 815,
+     "term": "死锁",
+     "term_en": "Deadlock",
+     "definition": "事务形成循环等待，没有参与者能够独立继续。",
+     "introduced_in": "第 10 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 20,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L20 Opus 多版本并发控制 MVCC Multi Version Concurrency Control/15-445-lecture-20-multi-version-concurrency-control.md"
+    },
+    {
+     "glossary_id": 895,
+     "term": "死锁",
+     "term_en": "Deadlock",
+     "definition": "事务形成循环等待，没有参与者能够独立继续。",
+     "introduced_in": "第 10 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 21,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L21 Opus 预写日志与影子分页 Write Ahead Logging and Shadow Paging/15-445-lecture-21-database-logging.md"
+    }
+   ]
+  },
+  {
+   "t": "MVCC",
+   "results": [
+    {
+     "glossary_id": 832,
+     "term": "多版本并发控制",
+     "term_en": "Multi-Version Concurrency Control (MVCC)",
+     "definition": "为每个逻辑对象维护多个物理版本，写时创建新版本，读时按时间戳选择版本。",
+     "introduced_in": "本讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 20,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L20 Opus 多版本并发控制 MVCC Multi Version Concurrency Control/15-445-lecture-20-multi-version-concurrency-control.md"
+    },
+    {
+     "glossary_id": 887,
+     "term": "多版本并发控制",
+     "term_en": "Multi-Version Concurrency Control (MVCC)",
+     "definition": "为每个逻辑对象维护多个物理版本，写时创建新版本，读时按时间戳选择版本。",
+     "introduced_in": "第 20 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 21,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L21 Opus 预写日志与影子分页 Write Ahead Logging and Shadow Paging/15-445-lecture-21-database-logging.md"
+    },
+    {
+     "glossary_id": 1117,
+     "term": "多版本并发控制",
+     "term_en": "Multi-Version Concurrency Control (MVCC)",
+     "definition": "为每个逻辑对象维护多个物理版本，写时创建新版本，读时按时间戳选择版本。",
+     "introduced_in": "第 20 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 23,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L23 Opus 分布式数据库 上 Distributed Databases Pt 1/15-445-lecture-23-distributed-database-systems-i.md"
+    },
+    {
+     "glossary_id": 1140,
+     "term": "多版本并发控制",
+     "term_en": "Multi-Version Concurrency Control (MVCC)",
+     "definition": "为每个逻辑对象维护多个物理版本，写时创建新版本，读时按时间戳选择版本。",
+     "introduced_in": "第 20 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 24,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L24 Opus 分布式数据库 下 Distributed Databases Pt 2/15-445-lecture-24-distributed-database-systems-ii.md"
+    },
+    {
+     "glossary_id": 1315,
+     "term": "多版本并发控制",
+     "term_en": "Multi-Version Concurrency Control (MVCC)",
+     "definition": "为每个逻辑对象维护多个物理版本，写时创建新版本，读时按时间戳选择版本。",
+     "introduced_in": "第 20 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 25,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L25 Opus 高级数据库速览 RelationalAI 数据库讲座 Advanced Databases Speed Run RelationalAI Database Talk/15-445-lecture-25-final-review-and-systems-potpourri.md"
+    }
+   ]
+  },
+  {
+   "t": "B+ 树",
+   "results": [
+    {
+     "glossary_id": 61,
+     "term": "B+ 树",
+     "term_en": "B+ Tree",
+     "definition": "内部节点导航、叶节点保存真实值的有序多路平衡树。",
+     "introduced_in": "第 8 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 10,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L10 Astra 数据结构中的闩锁 Latching in Data Structures/15-445-lecture-10-index-concurrency-control.md"
+    },
+    {
+     "glossary_id": 125,
+     "term": "B+ 树",
+     "term_en": "B+ Tree",
+     "definition": "内部节点导航、叶节点保存真实值的有序多路平衡树。",
+     "introduced_in": "第 8 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 11,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md"
+    },
+    {
+     "glossary_id": 215,
+     "term": "B+ 树",
+     "term_en": "B+ Tree",
+     "definition": "内部节点导航、叶节点保存真实值的有序多路平衡树。",
+     "introduced_in": "第 8 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 12,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md"
+    },
+    {
+     "glossary_id": 253,
+     "term": "B+ 树",
+     "term_en": "B+ Tree",
+     "definition": "内部节点导航、叶节点保存真实值的有序多路平衡树。",
+     "introduced_in": "第 8 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 13,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md"
+    },
+    {
+     "glossary_id": 386,
+     "term": "B+ 树",
+     "term_en": "B+ Tree",
+     "definition": "内部节点导航、叶节点保存真实值的有序多路平衡树。",
+     "introduced_in": "第 8 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 15,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md"
+    },
+    {
+     "glossary_id": 655,
+     "term": "B+ 树",
+     "term_en": "B+ Tree",
+     "definition": "内部节点导航、叶节点保存真实值的有序多路平衡树。",
+     "introduced_in": "第 8 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 18,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L18 Astra 两阶段封锁事务 Firebolt 数据库讲座 Transactions with Two Phase Locking Firebolt Database Talk/15-445-lecture-18-two-phase-locking-concurrency-control.md"
+    }
+   ]
+  },
+  {
+   "t": "缓冲池",
+   "results": [
+    {
+     "glossary_id": 72,
+     "term": "缓冲池",
+     "term_en": "Buffer Pool",
+     "definition": "由定长帧组成的一大块内存，用来存放从磁盘读入的页。",
+     "introduced_in": "第 3 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 10,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L10 Astra 数据结构中的闩锁 Latching in Data Structures/15-445-lecture-10-index-concurrency-control.md"
+    },
+    {
+     "glossary_id": 129,
+     "term": "缓冲池",
+     "term_en": "Buffer Pool",
+     "definition": "由定长帧组成的一大块内存，用来存放从磁盘读入的页。",
+     "introduced_in": "第 3 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 11,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md"
+    },
+    {
+     "glossary_id": 189,
+     "term": "缓冲池",
+     "term_en": "Buffer Pool",
+     "definition": "由定长帧组成的一大块内存，用来存放从磁盘读入的页。",
+     "introduced_in": "第 3 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 12,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md"
+    },
+    {
+     "glossary_id": 247,
+     "term": "缓冲池",
+     "term_en": "Buffer Pool",
+     "definition": "由定长帧组成的一大块内存，用来存放从磁盘读入的页。",
+     "introduced_in": "第 3 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 13,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md"
+    },
+    {
+     "glossary_id": 325,
+     "term": "缓冲池",
+     "term_en": "Buffer Pool",
+     "definition": "由定长帧组成的一大块内存，用来存放从磁盘读入的页。",
+     "introduced_in": "第 3 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 14,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md"
+    },
+    {
+     "glossary_id": 421,
+     "term": "缓冲池",
+     "term_en": "Buffer Pool",
+     "definition": "由定长帧组成的一大块内存，用来存放从磁盘读入的页。",
+     "introduced_in": "第 3 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 15,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md"
+    }
+   ]
+  },
+  {
+   "t": "事务",
+   "results": [
+    {
+     "glossary_id": 78,
+     "term": "事务",
+     "term_en": "Transaction",
+     "definition": "应用希望作为整体处理的一组数据库操作，后续会进一步形式化。",
+     "introduced_in": "本讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 10,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L10 Astra 数据结构中的闩锁 Latching in Data Structures/15-445-lecture-10-index-concurrency-control.md"
+    },
+    {
+     "glossary_id": 269,
+     "term": "事务",
+     "term_en": "Transaction",
+     "definition": "应用希望作为整体处理的一组数据库操作，后续会进一步形式化。",
+     "introduced_in": "第 10 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 13,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md"
+    },
+    {
+     "glossary_id": 348,
+     "term": "事务",
+     "term_en": "Transaction",
+     "definition": "应用希望作为整体处理的一组数据库操作，后续会进一步形式化。",
+     "introduced_in": "第 10 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 14,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md"
+    },
+    {
+     "glossary_id": 480,
+     "term": "事务",
+     "term_en": "Transaction",
+     "definition": "应用希望作为整体处理的一组数据库操作，后续会进一步形式化。",
+     "introduced_in": "第 10 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 16,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-query-planning-and-optimization-ii.md"
+    },
+    {
+     "glossary_id": 544,
+     "term": "事务",
+     "term_en": "Transaction",
+     "definition": "为完成业务功能而共同执行、整体成功或失败的一组数据库操作。（本讲首次出现：1.1；引入于：[第 10 讲](../L10%20Astra%20数据结构中的闩锁%20Latching%20in%20Data%20Structures/15-445-lecture-10-index-concurrency-control.md)）",
+     "introduced_in": null,
+     "course": "CMU15445_Final",
+     "lecture_no": 17,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L17 Astra 并发控制理论 Concurrency Control Theory/15-445-lecture-17-concurrency-control-theory.md"
+    },
+    {
+     "glossary_id": 637,
+     "term": "事务",
+     "term_en": "Transaction",
+     "definition": "为完成业务功能而共同执行、整体成功或失败的一组数据库操作。",
+     "introduced_in": "第 10 讲",
+     "course": "CMU15445_Final",
+     "lecture_no": 18,
+     "rel_path": "CMU/CMU15445_Final/Lectures/L18 Astra 两阶段封锁事务 Firebolt 数据库讲座 Transactions with Two Phase Locking Firebolt Database Talk/15-445-lecture-18-two-phase-locking-concurrency-control.md"
+    }
+   ]
+  }
+ ]
+}

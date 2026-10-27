@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>笔记浏览 · 讲义库索引器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html" class="btn ghost small">← 返回检索</a>
+  <span class="logo" id="crumb">讲义库<span class="dot">索引器</span></span>
+  <span class="spacer"></span>
+  <a href="about.html" class="btn ghost small">关于 / 架构</a>
+</div>
+
+<div class="wrap">
+  <div id="demoNote" class="demo-note" style="display:none">
+    公开示例站：本页数据为<b>本机 seekdb 实测抓取</b>的快照；PPT 截图未内置（版权/体积），完整图见本机 vault。
+  </div>
+  <div class="note-head" id="noteHead"></div>
+  <div class="note-layout">
+    <div class="side-left"><div class="panel"><h3>目录（切片）</h3><div class="toc" id="toc"></div></div></div>
+    <div class="side-mid" id="chunks"><div class="loading">加载中…</div></div>
+    <div class="side-right">
+      <div class="panel" style="margin-bottom:14px"><h3>本讲术语</h3><div class="termlist" id="terms"></div></div>
+      <div class="panel"><h3>链接</h3><div class="linklist" id="links"></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="popover" class="popover" style="display:none"></div>
+
+<script src="md.js"></script>
+<script src="snapshot.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const api = window.apiSnapshot || ((path) => fetch(path).then(r => { if (!r.ok) throw new Error(r.status + " " + path); return r.json(); }));
+const DEMO = !!window.SNAPSHOT_MODE;
+const params = new URLSearchParams(location.search);
+let NOTE = null, TERMS = {};
+
+function resolveTargetPath(dataPath) {
+  const base = NOTE.rel_path.split("/").slice(0, -1);
+  const segs = [...base, ...decodeURIComponent(dataPath).split("/")];
+  const out = [];
+  for (const s of segs) {
+    if (s === "..") out.pop();
+    else if (s !== "." && s !== "") out.push(s);
+  }
+  return out.join("/");
+}
+
+async function load() {
+  if (DEMO) $("demoNote").style.display = "block";
+  const byId = params.get("id");
+  NOTE = await api(byId != null ? "/api/note?id=" + byId
+                                : "/api/note?path=" + encodeURIComponent(params.get("path")));
+  document.title = (NOTE.title || NOTE.rel_path) + " · 讲义库索引器";
+  const kindName = {lecture:"讲义",transcript:"转写稿",other:"其他"}[NOTE.kind] || NOTE.kind;
+  $("noteHead").innerHTML = `
+    <div style="color:var(--muted);font-size:13px">${esc(NOTE.rel_path)}</div>
+    <h1>${esc(NOTE.title || "")}</h1>
+    <div class="badges">
+      ${NOTE.course ? `<span class="badge course">${esc(NOTE.course)}</span>` : ""}
+      ${NOTE.lecture_no != null ? `<span class="badge lec">第 ${NOTE.lecture_no} 讲</span>` : ""}
+      <span class="badge kind">${kindName}</span>
+      ${NOTE.agent ? `<span class="badge">整理: ${esc(NOTE.agent)}</span>` : ""}
+      ${NOTE.zh_title ? `<span class="badge">${esc(NOTE.zh_title)}</span>` : ""}
+      ${NOTE.en_title ? `<span class="badge gray">${esc(NOTE.en_title)}</span>` : ""}
+      <span class="badge">${NOTE.char_count} 字符</span>
+      <span class="badge">${NOTE.chunk_count} 切片</span>
+      <span class="badge">${NOTE.glossary_count} 术语</span>
+      <span class="badge">出链 ${NOTE.links_out_valid}/${NOTE.links_out} 有效</span>
+      <span class="badge">入链 ${NOTE.links_in}</span>
+    </div>`;
+
+  const [chunkData, gloss, linkData] = await Promise.all([
+    api(`/api/note/${NOTE.note_id}/chunks?content=1`),
+    api(`/api/note/${NOTE.note_id}/glossary`),
+    api(`/api/note/${NOTE.note_id}/links`),
+  ]);
+
+  for (const g of gloss.terms) if (!(g.term in TERMS)) TERMS[g.term] = g;
+
+  $("toc").innerHTML = chunkData.chunks.map(c => {
+    const last = (c.heading_path || "").split(" > ").pop() || `#${c.seq}`;
+    const lv = (c.heading_path || "").split(" > ").length >= 3 ? " lv3" : "";
+    return `<a class="tocitem${lv}" href="#chunk-${c.chunk_id}" data-cid="${c.chunk_id}" title="${esc(c.heading_path || "")}">${c.seq}. ${esc(last)}</a>`;
+  }).join("");
+
+  // 快照模式：vault 图片不内置，用带说明的占位图（md.js 不改）
+  const resolveFile = DEMO
+    ? (() => window.SNAPSHOT_PLACEHOLDER)
+    : ((p) => `/api/vault-file?note_id=${NOTE.note_id}&path=${encodeURIComponent(p)}`);
+  $("chunks").innerHTML = chunkData.chunks.map(c => `
+    <div class="chunk" id="chunk-${c.chunk_id}">
+      <div class="chead">
+        <span class="seq">#${c.seq}</span>
+        ${c.page_start ? `<span class="badge page">PPT p${c.page_start}${c.page_end && c.page_end !== c.page_start ? "–" + c.page_end : ""}</span>` : ""}
+        <span class="hpath">${esc(c.heading_path || "")}</span>
+      </div>
+      <div class="md">${renderMd(c.content || "", { resolveFile })}</div>
+    </div>`).join("");
+
+  $("terms").innerHTML = gloss.terms.map(g => `
+    <div class="ti" data-term="${esc(g.term)}"><strong>${esc(g.term)}</strong>
+      <span class="en">${esc(g.term_en || "")}</span></div>`).join("") || '<div style="color:var(--muted)">（无）</div>';
+
+  const outHtml = linkData.out.slice(0, 60).map(l => `
+    <div class="li ${l.valid ? "" : "invalid"}">
+      <a class="mdlink" data-vault="1" data-path="${encodeURIComponent(l.target_rel)}" data-anchor="${esc(l.anchor || "")}" href="#">${esc(l.link_text || l.target_rel)}</a>
+      <span class="arrow">→</span>${l.dst_title ? esc(l.dst_title.slice(0, 40)) : `<span style="color:var(--bad)">${esc(l.target_rel.split("/").pop())}（缺失）</span>`}
+    </div>`).join("");
+  const inHtml = linkData.in.slice(0, 40).map(l => `
+    <div class="li"><a href="note.html?path=${encodeURIComponent(l.src_path)}">${esc((l.src_title || l.src_path).slice(0, 40))}</a>
+      <span class="arrow">→</span>${esc(l.link_text || "")}</div>`).join("");
+  $("links").innerHTML =
+    `<div style="font-weight:600;margin:4px 0">出链 (${linkData.out.length})</div>${outHtml || "（无）"}` +
+    `<div style="font-weight:600;margin:10px 0 4px">入链 (${linkData.in.length})</div>${inHtml || "（无）"}`;
+
+  const flash = params.get("chunk");
+  if (flash) {
+    const el = $("chunk-" + flash);
+    if (el) { el.scrollIntoView({ behavior: "smooth" }); el.classList.add("flash"); }
+  }
+}
+
+async function showTerm(term, x, y) {
+  const pop = $("popover");
+  let g = TERMS[term];
+  if (g) g = Object.assign({ course: NOTE.course, lecture_no: NOTE.lecture_no }, g);
+  if (!g) {
+    try {
+      const d = await api("/api/term?t=" + encodeURIComponent(term) + "&k=1");
+      g = d.results[0];
+    } catch (e) {}
+  }
+  pop.innerHTML = g
+    ? `<div class="pt">${esc(g.term)} <span style="color:var(--muted);font-weight:400">${esc(g.term_en || "")}</span></div>
+       <div>${esc(g.definition || "")}</div>
+       <div class="pm">${esc(g.course || "")} · L${g.lecture_no ?? "?"} · 引入于 ${esc(g.introduced_in || "?")}</div>`
+    : `<div class="pt">${esc(term)}</div><div style="color:var(--muted)">${DEMO ? "示例快照未收录该术语" : "术语表中未收录"}</div>`;
+  pop.style.display = "block";
+  const r = pop.getBoundingClientRect();
+  pop.style.left = Math.min(x, window.innerWidth - r.width - 16) + "px";
+  pop.style.top = Math.min(y + 14, window.innerHeight - r.height - 16) + "px";
+}
+
+document.addEventListener("click", async (e) => {
+  const term = e.target.closest(".term, .ti[data-term]");
+  if (term) {
+    e.preventDefault();
+    const rect = term.getBoundingClientRect();
+    showTerm(term.dataset.term, rect.left, rect.bottom);
+    return;
+  }
+  const md = e.target.closest(".mdlink");
+  if (md) {
+    e.preventDefault();
+    const target = md.dataset.vault
+      ? decodeURIComponent(md.dataset.path)
+      : resolveTargetPath(md.dataset.path);
+    try {
+      const n = await api("/api/note?path=" + encodeURIComponent(target));
+      location.href = "note.html?id=" + n.note_id;
+    } catch (err) {
+      alert(DEMO ? ("示例快照未内置该链接目标的详情：\n" + target) : ("链接目标不在库中：" + target));
+    }
+    return;
+  }
+  if (!e.target.closest(".popover")) $("popover").style.display = "none";
+});
+
+document.addEventListener("scroll", () => {
+  let active = null;
+  for (const el of document.querySelectorAll(".chunk")) {
+    if (el.getBoundingClientRect().top < 120) active = el.id;
+  }
+  document.querySelectorAll(".tocitem").forEach(a =>
+    a.classList.toggle("active", "chunk-" + a.dataset.cid === active));
+}, { passive: true });
+
+load().catch(e => { $("chunks").innerHTML = `<div class="empty">${esc(String(e.message || e))}</div>`; });
+</script>
+</body>
+</html>

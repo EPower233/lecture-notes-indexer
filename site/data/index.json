@@ -1,0 +1,184 @@
+{
+ "captured_note_ids": [
+  1,
+  2,
+  6,
+  10,
+  21,
+  22,
+  26,
+  28,
+  36,
+  40,
+  48,
+  50,
+  125,
+  128,
+  140,
+  143
+ ],
+ "note_index": {
+  "1": {
+   "rel_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md",
+   "title": "CMU 15-445 全课术语索引"
+  },
+  "2": {
+   "rel_path": "CMU/CMU15445_Final/Lectures/L1 Opus 关系模型与关系代数 Relational Model and Algebra/1 15-445-lecture-01-relational-model-and-algebra.md",
+   "title": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra）"
+  },
+  "6": {
+   "rel_path": "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md",
+   "title": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms）"
+  },
+  "10": {
+   "rel_path": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md",
+   "title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）"
+  },
+  "21": {
+   "rel_path": "CMU/CMU15445_Final/Lectures/L18 Astra 两阶段封锁事务 Firebolt 数据库讲座 Transactions with Two Phase Locking Firebolt Database Talk/15-445-lecture-18-two-phase-locking-concurrency-control.md",
+   "title": "CMU 15-445 第 18 讲：两阶段锁并发控制（Two-Phase Locking Concurrency Control）"
+  },
+  "22": {
+   "rel_path": "CMU/CMU15445_Final/Lectures/L19 Opus 时间戳排序并发控制 Timestamp Ordering Concurrency Control/15-445-lecture-19-timestamp-ordering-concurrency-control.md",
+   "title": "CMU 15-445 第 19 讲：时间戳排序并发控制（Timestamp Ordering Concurrency Control）"
+  },
+  "26": {
+   "rel_path": "CMU/CMU15445_Final/Lectures/L20 Opus 多版本并发控制 MVCC Multi Version Concurrency Control/15-445-lecture-20-multi-version-concurrency-control.md",
+   "title": "CMU 15-445 第 20 讲：多版本并发控制（Multi-Version Concurrency Control）"
+  },
+  "28": {
+   "rel_path": "CMU/CMU15445_Final/Lectures/L21 Opus 预写日志与影子分页 Write Ahead Logging and Shadow Paging/15-445-lecture-21-database-logging.md",
+   "title": "CMU 15-445 第 21 讲：数据库日志（Database Logging）"
+  },
+  "36": {
+   "rel_path": "CMU/CMU15445_Final/Lectures/L25 Opus 高级数据库速览 RelationalAI 数据库讲座 Advanced Databases Speed Run RelationalAI Database Talk/15-445-lecture-25-final-review-and-systems-potpourri.md",
+   "title": "CMU 15-445 第 25 讲：期末复习与系统杂谈（Final Review + Systems Potpourri）"
+  },
+  "40": {
+   "rel_path": "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-memory-management.md",
+   "title": "CMU 15-445 第 04 讲：内存管理（Memory Management）"
+  },
+  "48": {
+   "rel_path": "CMU/CMU15445_Final/Lectures/L8 Astra B+树 世界上最好的数据结构 B+Trees The Best Data Structure in the World/15-445-lecture-08-indexes-and-filters-i.md",
+   "title": "CMU 15-445 第 08 讲：索引与过滤器（上）（Indexes & Filters I）"
+  },
+  "50": {
+   "rel_path": "CMU/CMU15445_Final/Lectures/L9 Opus 向量索引 倒排索引 跳表 布隆过滤器 Vector Indexes Inverted Indexes Skip Lists Bloom Filters/15-445-lecture-09-indexes-and-filters-ii.md",
+   "title": "CMU 15-445 第 09 讲：索引与过滤器（下）（Indexes & Filters II）"
+  },
+  "125": {
+   "rel_path": "Mathematics/概率论 与 数理统计 Kira and 牢宇/3. 二维随机变量/VII. 二维随机变量函数的分布(最难).md",
+   "title": "VII. 二维随机变量函数的分布(最难)"
+  },
+  "128": {
+   "rel_path": "Mathematics/概率论 与 数理统计 Kira and 牢宇/4. 大数定律与中心极限定理/III. 大数定律.md",
+   "title": "III. 大数定律"
+  },
+  "140": {
+   "rel_path": "Mathematics/概率论 与 数理统计 Kira and 牢宇/概率论与数理统计Part.md",
+   "title": "I. 事件"
+  },
+  "143": {
+   "rel_path": "Mathematics/牢宇大观/CXY-00XProbabilityStatic.md",
+   "title": "CXY-00XProbabilityStatic"
+  }
+ },
+ "path_map": {
+  "CMU/CMU15445_Final/Lectures/00-术语索引.md": 1,
+  "CMU/CMU15445_Final/Lectures/L1 Opus 关系模型与关系代数 Relational Model and Algebra/1 15-445-lecture-01-relational-model-and-algebra.md": 2,
+  "CMU/CMU15445_Final/Lectures/L1 Opus 关系模型与关系代数 Relational Model and Algebra/15-445-lecture-01-transcript.md": 3,
+  "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md": 24,
+  "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-transcript.md": 25,
+  "CMU/CMU15445_Final/Lectures/L3 Opus 数据库存储 文件 页 元组 Database Storage Files Pages Tuples/15-445-lecture-03-database-storage-i.md": 38,
+  "CMU/CMU15445_Final/Lectures/L3 Opus 数据库存储 文件 页 元组 Database Storage Files Pages Tuples/15-445-lecture-03-transcript.md": 39,
+  "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-memory-management.md": 40,
+  "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-transcript.md": 41,
+  "CMU/CMU15445_Final/Lectures/L5 Opus 日志结构存储 SingleStore 数据库讲座 Log Structured Database Storage SingleStore Database Talk/15-445-lecture-05-database-storage-ii.md": 42,
+  "CMU/CMU15445_Final/Lectures/L5 Opus 日志结构存储 SingleStore 数据库讲座 Log Structured Database Storage SingleStore Database Talk/15-445-lecture-05-transcript.md": 43,
+  "CMU/CMU15445_Final/Lectures/L6 Opus 列存数据库 Column Store Databases/15-445-lecture-06-storage-models-and-compression.md": 44,
+  "CMU/CMU15445_Final/Lectures/L6 Opus 列存数据库 Column Store Databases/15-445-lecture-06-transcript.md": 45,
+  "CMU/CMU15445_Final/Lectures/L7 Opus 数据库哈希表 YugabyteDB 数据库讲座 Database Hash Tables YugabyteDB Database Talk/15-445-lecture-07-hash-tables.md": 46,
+  "CMU/CMU15445_Final/Lectures/L7 Opus 数据库哈希表 YugabyteDB 数据库讲座 Database Hash Tables YugabyteDB Database Talk/15-445-lecture-07-transcript.md": 47,
+  "CMU/CMU15445_Final/Lectures/L8 Astra B+树 世界上最好的数据结构 B+Trees The Best Data Structure in the World/15-445-lecture-08-indexes-and-filters-i.md": 48,
+  "CMU/CMU15445_Final/Lectures/L8 Astra B+树 世界上最好的数据结构 B+Trees The Best Data Structure in the World/15-445-lecture-08-transcript.md": 49,
+  "CMU/CMU15445_Final/Lectures/L9 Opus 向量索引 倒排索引 跳表 布隆过滤器 Vector Indexes Inverted Indexes Skip Lists Bloom Filters/15-445-lecture-09-indexes-and-filters-ii.md": 50,
+  "CMU/CMU15445_Final/Lectures/L9 Opus 向量索引 倒排索引 跳表 布隆过滤器 Vector Indexes Inverted Indexes Skip Lists Bloom Filters/15-445-lecture-09-transcript.md": 51,
+  "CMU/CMU15445_Final/Lectures/L10 Astra 数据结构中的闩锁 Latching in Data Structures/15-445-lecture-10-index-concurrency-control.md": 4,
+  "CMU/CMU15445_Final/Lectures/L10 Astra 数据结构中的闩锁 Latching in Data Structures/15-445-lecture-10-transcript.md": 5,
+  "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md": 6,
+  "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-transcript.md": 7,
+  "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md": 8,
+  "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-transcript.md": 9,
+  "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md": 10,
+  "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-transcript.md": 11,
+  "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md": 12,
+  "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-transcript.md": 13,
+  "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md": 14,
+  "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-transcript.md": 15,
+  "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-query-planning-and-optimization-ii.md": 16,
+  "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-transcript.md": 17,
+  "CMU/CMU15445_Final/Lectures/L17 Astra 并发控制理论 Concurrency Control Theory/15-445-lecture-17-concurrency-control-theory.md": 18,
+  "CMU/CMU15445_Final/Lectures/L17 Astra 并发控制理论 Concurrency Control Theory/15-445-lecture-17-transcript.md": 19,
+  "CMU/CMU15445_Final/Lectures/L18 Astra 两阶段封锁事务 Firebolt 数据库讲座 Transactions with Two Phase Locking Firebolt Database Talk/15-445-lecture-18-two-phase-locking-concurrency-control.md": 21,
+  "CMU/CMU15445_Final/Lectures/L18 Astra 两阶段封锁事务 Firebolt 数据库讲座 Transactions with Two Phase Locking Firebolt Database Talk/15-445-lecture-18-transcript.md": 20,
+  "CMU/CMU15445_Final/Lectures/L19 Opus 时间戳排序并发控制 Timestamp Ordering Concurrency Control/15-445-lecture-19-timestamp-ordering-concurrency-control.md": 22,
+  "CMU/CMU15445_Final/Lectures/L19 Opus 时间戳排序并发控制 Timestamp Ordering Concurrency Control/15-445-lecture-19-transcript.md": 23,
+  "CMU/CMU15445_Final/Lectures/L20 Opus 多版本并发控制 MVCC Multi Version Concurrency Control/15-445-lecture-20-multi-version-concurrency-control.md": 26,
+  "CMU/CMU15445_Final/Lectures/L20 Opus 多版本并发控制 MVCC Multi Version Concurrency Control/15-445-lecture-20-transcript.md": 27,
+  "CMU/CMU15445_Final/Lectures/L21 Opus 预写日志与影子分页 Write Ahead Logging and Shadow Paging/15-445-lecture-21-database-logging.md": 28,
+  "CMU/CMU15445_Final/Lectures/L21 Opus 预写日志与影子分页 Write Ahead Logging and Shadow Paging/15-445-lecture-21-transcript.md": 29,
+  "CMU/CMU15445_Final/Lectures/L22 Astra 数据库恢复 ClickHouse 数据库讲座 Database Recovery ClickHouse Database Talk/15-445-lecture-22-database-recovery.md": 30,
+  "CMU/CMU15445_Final/Lectures/L22 Astra 数据库恢复 ClickHouse 数据库讲座 Database Recovery ClickHouse Database Talk/15-445-lecture-22-transcript.md": 31,
+  "CMU/CMU15445_Final/Lectures/L23 Opus 分布式数据库 上 Distributed Databases Pt 1/15-445-lecture-23-distributed-database-systems-i.md": 32,
+  "CMU/CMU15445_Final/Lectures/L23 Opus 分布式数据库 上 Distributed Databases Pt 1/15-445-lecture-23-transcript.md": 33,
+  "CMU/CMU15445_Final/Lectures/L24 Opus 分布式数据库 下 Distributed Databases Pt 2/15-445-lecture-24-distributed-database-systems-ii.md": 34,
+  "CMU/CMU15445_Final/Lectures/L24 Opus 分布式数据库 下 Distributed Databases Pt 2/15-445-lecture-24-transcript.md": 35,
+  "CMU/CMU15445_Final/Lectures/L25 Opus 高级数据库速览 RelationalAI 数据库讲座 Advanced Databases Speed Run RelationalAI Database Talk/15-445-lecture-25-final-review-and-systems-potpourri.md": 36,
+  "CMU/CMU15445_Final/Lectures/L25 Opus 高级数据库速览 RelationalAI 数据库讲座 Advanced Databases Speed Run RelationalAI Database Talk/15-445-lecture-25-transcript.md": 37,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/概率论与数理统计Part.md": 140,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/1. 事件与概率/I. 事件.md": 110,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/1. 事件与概率/II. 概率.md": 111,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/2. 一维随机变量/II. F(x) 和 f(x) 判定.md": 114,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/2. 一维随机变量/III. 八大分布.md": 115,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/2. 一维随机变量/IV. 一维随机变量函数的分布.md": 116,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/2. 一维随机变量/V. 三种特殊积分.md": 117,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/2. 一维随机变量/VI. 求最值函数取值的概率.md": 118,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/2. 一维随机变量/I.分布函数和概率密度/2-2 分布函数.md": 112,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/2. 一维随机变量/I.分布函数和概率密度/2-8 连续性随机变量的概念与性质.md": 113,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/3. 二维随机变量/I. 分布函数.md": 119,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/3. 二维随机变量/II. 概率分布.md": 120,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/3. 二维随机变量/III. 概率密度.md": 121,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/3. 二维随机变量/IV. 随机变量的独立性.md": 122,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/3. 二维随机变量/V. 二维均匀分布.md": 123,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/3. 二维随机变量/VI. 二维正态分布.md": 124,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/3. 二维随机变量/VII. 二维随机变量函数的分布(最难).md": 125,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/4. 大数定律与中心极限定理/I. 切比雪夫不等式.md": 126,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/4. 大数定律与中心极限定理/II. 依概率收敛.md": 127,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/4. 大数定律与中心极限定理/III. 大数定律.md": 128,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/4. 大数定律与中心极限定理/IV. 中心极限定理.md": 129,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/5. 数字特征/I. 期望.md": 130,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/5. 数字特征/II. 方差.md": 131,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/5. 数字特征/III. 八大分布的期望与方差.md": 132,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/5. 数字特征/IV. 协方差.md": 133,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/5. 数字特征/V. 相关系数.md": 134,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/6. 统计初步/I. 统计基础知识.md": 135,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/6. 统计初步/II. 三大抽样分布.md": 136,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/6. 统计初步/III. 六大统计量.md": 137,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/6. 统计初步/IV. 参数估计.md": 138,
+  "Mathematics/概率论 与 数理统计 Kira and 牢宇/6. 统计初步/V. 置信区间与假设检验.md": 139,
+  "Mathematics/牢宇大观/CXY-001REBOOT.md": 141,
+  "Mathematics/牢宇大观/CXY-007素人教師の多元微分大观（中国語字幕).md": 142,
+  "Mathematics/牢宇大观/CXY-00XProbabilityStatic.md": 143,
+  "Mathematics/离散/侯季南25051213 离散数学 作业 第一章 .md": 144,
+  "Mathematics/离散/侯季南25051213 离散数学 作业 第三章 .md": 145,
+  "Mathematics/离散/侯季南25051213 离散数学 作业 第二章 .md": 146,
+  "Mathematics/高等数学/线面积分/一、曲线积分.md": 147,
+  "Mathematics/高等数学/线面积分/二、曲面积分.md": 148,
+  "Mathematics/高等数学/线面积分/总体框架.md": 149,
+  "Mathematics/高等数学/线面积分/曲线积分刷题记录/00 总览与错题索引.md": 150,
+  "Mathematics/高等数学/线面积分/曲线积分刷题记录/一、第一类曲线积分（对弧长）.md": 151,
+  "Mathematics/高等数学/线面积分/曲线积分刷题记录/三、格林公式.md": 152,
+  "Mathematics/高等数学/线面积分/曲线积分刷题记录/二、第二类曲线积分（对坐标）.md": 153,
+  "Mathematics/高等数学/线面积分/曲线积分刷题记录/四、路径无关、全微分与原函数.md": 154
+ }
+}

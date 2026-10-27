@@ -1,0 +1,2627 @@
+{
+ "note": {
+  "note_id": 2,
+  "rel_path": "CMU/CMU15445_Final/Lectures/L1 Opus 关系模型与关系代数 Relational Model and Algebra/1 15-445-lecture-01-relational-model-and-algebra.md",
+  "title": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra）",
+  "course": "CMU15445_Final",
+  "course_code": "15-445",
+  "lecture_no": 1,
+  "kind": "lecture",
+  "agent": "Opus",
+  "zh_title": "关系模型与关系代数",
+  "en_title": "Relational Model And Algebra",
+  "has_frontmatter": 0,
+  "char_count": 53626,
+  "ingested_at": "2026-10-28T03:16:41",
+  "chunk_count": 81,
+  "seq_min": 1,
+  "seq_max": 81,
+  "links_out": 66,
+  "links_out_valid": 66,
+  "links_in": 99,
+  "glossary_count": 60
+ },
+ "chunks": [
+  {
+   "chunk_id": 195,
+   "seq": 1,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra）",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 272,
+   "content": "> **课程**：CMU 15-445/645 Database Systems（Fall 2025）· **主讲**：Andy Pavlo\n> **课程主页**：https://15445.courses.cs.cmu.edu/fall2025/\n> **材料**：课件 PPT、官方 Lecture Notes、课堂录音转写稿\n> **说明**：正文以 PPT 与 Lecture Notes 为准。讲者原话的中文为意译，英文原文见脚注，依据课堂录音转写整理，已修正明显的语音识别错误。文中“📍 PPT 第 X 页”指幻灯片右上角印的编号。"
+  },
+  {
+   "chunk_id": 196,
+   "seq": 2,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 摘要（Abstract）",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 616,
+   "content": "数据要长期保存、被多个程序共享、在故障面前不丢失，仅靠应用程序自己读写文件是做不到的。以一个用 CSV 文件管理音乐商店数据的朴素方案为起点，可以看到它在[数据完整性](#数据完整性)、实现和[持久性](#持久性)三方面怎样失败，由此需要一个专门的软件，即[数据库管理系统](#数据库管理系统)（[DBMS](#数据库管理系统)），以及一套描述数据的统一方式，即[数据模型](#数据模型)。\n\n早期的 [DBMS](#数据库管理系统) 要求程序员亲自决定[访问路径](#访问路径)，查询代码与数据的存储方式绑在一起，数据一变代码就得重写。Ted Codd 的[关系模型](#关系模型)用值而不是地址来表达数据之间的联系，把“数据是什么”和“数据怎么存”分开，这就是[数据独立性](#数据独立性)。[关系](#关系)、[元组](#元组)、[主键](#主键)、[外键](#外键)和[约束](#约束)构成了描述数据的词汇，[关系代数](#关系代数)给出了在[关系](#关系)上计算的基本运算。[关系代数](#关系代数)隐含了计算的先后顺序，不同顺序的代价可以相差几个数量级，而最好的顺序又取决于随时间变化的数据，因此更好的做法是只声明想要的结果，把“怎么算”交给 [DBMS](#数据库管理系统)，这正是 SQL 和[查询优化](#查询优化)器的出发点。文档模型和向量模型放回这条线索上，就看得出它们绕开了什么，又在哪里重新撞上了老问题。"
+  },
+  {
+   "chunk_id": 197,
+   "seq": 3,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 摘要（Abstract） (part 2)",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 395,
+   "content": "的结果，把“怎么算”交给 [DBMS](#数据库管理系统)，这正是 SQL 和[查询优化](#查询优化)器的出发点。文档模型和向量模型放回这条线索上，就看得出它们绕开了什么，又在哪里重新撞上了老问题。\n\n读完本讲，你应该能够分清[数据库](#数据库)与 [DBMS](#数据库管理系统)，并说出 [DBMS](#数据库管理系统) 替应用解决了哪几类问题；能用[主键](#主键)、[外键](#外键)和[关联表](#关联表)为多对多的场景建模；能手工算出[选择](#选择)、[投影](#投影)、[并](#并)、[交](#交)、[差](#差)、[笛卡尔积](#笛卡尔积)、[连接](#连接)的结果，并写出对应的 SQL；能用一次代价计算说明[声明式](#声明式)查询为什么优于[过程式](#过程式)查询；也能判断一个新出现的[数据模型](#数据模型)相对于[关系模型](#关系模型)究竟新在哪里。"
+  },
+  {
+   "chunk_id": 198,
+   "seq": 4,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 课程地图",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 380,
+   "content": "本讲是整门课的起点。这门课讨论[数据库管理系统](#数据库管理系统)内部如何设计、如何实现，不讨论怎样用它开发应用，也不讨论怎样运维它。在讨论任何实现之前，需要先有一套描述数据的词汇和思维框架，之后整个学期都建立在它上面。\n\n```mermaid\nflowchart LR\n    A[\"一、基础与查询语言<br/>#01–#02<br/>★ 本讲 #01\"] --> B[\"二、存储<br/>#03–#06\"]\n    B --> C[\"三、访问方法<br/>#07–#10\"]\n    C --> D[\"四、查询处理<br/>#11–#16\"]\n    D --> E[\"五、并发控制<br/>#17–#20\"]\n    E --> F[\"六、日志与恢复<br/>#21–#22\"]\n    F --> G[\"七、分布式<br/>#23–#24\"]\n```"
+  },
+  {
+   "chunk_id": 199,
+   "seq": 5,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 课程地图 (part 2)",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 799,
+   "content": "--> E[\"五、并发控制<br/>#17–#20\"]\n    E --> F[\"六、日志与恢复<br/>#21–#22\"]\n    F --> G[\"七、分布式<br/>#23–#24\"]\n```\n\n本讲不依赖前面的任何内容，它引入的概念则贯穿全课。第 [2](../L2%20Opus%20现代%20SQL%20dbt%20数据库讲座%20Modern%20SQL%20dbt%20Database%20Talk/15-445-lecture-02-modern-sql.md) 讲在本讲的基础上系统地讲 SQL。第 [3](../L3%20Opus%20数据库存储%20文件%20页%20元组%20Database%20Storage%20Files%20Pages%20Tuples/15-445-lecture-03-database-storage-i.md)、[4](../L4%20Opus%20内存管理与缓冲池%20Memory%20Management%20and%20Buffer%20Pools/15-445-lecture-04-memory-management.md)、[5](../L5%20Opus%20日志结构存储%20SingleStore%20数据库讲座%20Log%20Structured%20Database%20Storage%20SingleStore%20Database%20Talk/15-445-lecture-05-database-storage-ii.md)、[6](../L6%20Opus%20列存数据库%20Column%20Store%20Databases/15-445-lecture-06-storage-models-and-compression.md) 讲进入[物理模式](#物理模式)这一层，讨论数据在页和文件中"
+  },
+  {
+   "chunk_id": 200,
+   "seq": 6,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 课程地图 (part 3)",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 800,
+   "content": "tore%20Databases/15-445-lecture-06-storage-models-and-compression.md) 讲进入[物理模式](#物理模式)这一层，讨论数据在页和文件中如何组织。第 [7](../L7%20Opus%20数据库哈希表%20YugabyteDB%20数据库讲座%20Database%20Hash%20Tables%20YugabyteDB%20Database%20Talk/15-445-lecture-07-hash-tables.md)、[8](../L8%20Astra%20B%2B树%20世界上最好的数据结构%20B%2BTrees%20The%20Best%20Data%20Structure%20in%20the%20World/15-445-lecture-08-indexes-and-filters-i.md)、[9](../L9%20Opus%20向量索引%20倒排索引%20跳表%20布隆过滤器%20Vector%20Indexes%20Inverted%20Indexes%20Skip%20Lists%20Bloom%20Filters/15-445-lecture-09-indexes-and-filters-ii.md)、[10](../L10%20Astra%20数据结构中的闩锁%20Latching%20in%20Data%20Structures/15-445-lecture-10-index-concurrency-control.md) 讲的哈希表与 B+ 树回答“怎样快速找到一条记录”。[关系代数](#关系代数)的各个运算符在第 [11](../L11%20Astra%20排序与聚合算法%20MotherDuck%20数据库讲座%20Sorting%20and%20Aggregation%20"
+  },
+  {
+   "chunk_id": 201,
+   "seq": 7,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 课程地图 (part 4)",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 800,
+   "content": "](#关系代数)的各个运算符在第 [11](../L11%20Astra%20排序与聚合算法%20MotherDuck%20数据库讲座%20Sorting%20and%20Aggregation%20Algorithms%20MotherDuck%20Database%20Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md)、[12](../L12%20Astra%20哈希连接%20排序合并连接%20嵌套循环连接%20Hash%20Joins%20Sort%20Merge%20Joins%20Nested%20Loop%20Join%20Algorithms/15-445-lecture-12-joins-algorithms.md)、[13](../L13%20Opus%20查询执行%20上%20Query%20Execution%20Part%201/15-445-lecture-13-query-execution-i.md)、[14](../L14%20Opus%20并行查询引擎架构%20SpiralDB%20数据库讲座%20Parallel%20Query%20Engine%20Architectures%20SpiralDB%20Database%20Talk/15-445-lecture-14-query-execution-ii.md) 讲变成真正的执行算法和执行引擎，求值顺序的选择在第 [15](../L15%20Opus%20查询优化器%20上%20Database%20Query%20Optimizers%20Part%201/15-445-lecture-15-query-planning-and-optimization-i.md)、[16](../L16%20Astra%20"
+  },
+  {
+   "chunk_id": 202,
+   "seq": 8,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 课程地图 (part 5)",
+   "page_start": null,
+   "page_end": null,
+   "char_count": 1356,
+   "content": "Optimizers%20Part%201/15-445-lecture-15-query-planning-and-optimization-i.md)、[16](../L16%20Astra%20查询优化%20下%20Query%20Optimization%20Part%202/15-445-lecture-16-query-planning-and-optimization-ii.md) 讲交给[查询优化](#查询优化)器。[平面文件](#平面文件)方案暴露的并发与故障问题，分别由第 [17](../L17%20Astra%20并发控制理论%20Concurrency%20Control%20Theory/15-445-lecture-17-concurrency-control-theory.md)、[18](../L18%20Astra%20两阶段封锁事务%20Firebolt%20数据库讲座%20Transactions%20with%20Two%20Phase%20Locking%20Firebolt%20Database%20Talk/15-445-lecture-18-two-phase-locking-concurrency-control.md)、[19](../L19%20Opus%20时间戳排序并发控制%20Timestamp%20Ordering%20Concurrency%20Control/15-445-lecture-19-timestamp-ordering-concurrency-control.md)、[20](../L20%20Opus%20多版本并发控制%20MVCC%20Multi%20Version%20Concurrency%20Control/15-445-lecture-20-multi-version-concurrency-control.md) 讲的并发控制和第 [21](../L21%20Opus%20预写日志与影子分页%20Write%20Ahead%20Logging%20and%20Shadow%20Paging/15-445-lecture-21-database-logging.md)、[22](../L22%20Astra%20数据库恢复%20ClickHouse%20数据库讲座%20Database%20Recovery%20ClickHouse%20Database%20Talk/15-445-lecture-22-database-recovery.md) 讲的日志与恢复来回答，多台机器之间的复制则留到第 [23](../L23%20Opus%20分布式数据库%20上%20Distributed%20Databases%20Pt%201/15-445-lecture-23-distributed-database-systems-i.md)、[24](../L24%20Opus%20分布式数据库%20下%20Distributed%20Databases%20Pt%202/15-445-lecture-24-distributed-database-systems-ii.md) 讲。"
+  },
+  {
+   "chunk_id": 203,
+   "seq": 9,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 1. 数据库是什么",
+   "page_start": 15,
+   "page_end": 16,
+   "char_count": 711,
+   "content": "**[数据库](#数据库)**（Database）是一组经过组织、相互关联的数据，用来模拟现实世界的某个方面。这门课的选课名单就是一个[数据库](#数据库)：每个学生有姓名、电子邮箱和出生日期，这些记录合在一起，描述的是“谁在上这门课”这件现实中的事。\n![PPT 第 15 页](slides/page-17.png)\n\n\n[数据库](#数据库)是绝大多数计算机应用的核心组件。Andy 的看法更进一步：计算机科学做的事情，归根结底是接收输入、做某种处理、再产生输出，从足够高的层次看，这个过程本身也可以看作一个[数据库](#数据库)。不论以后是否从事数据库系统的开发，你都会不断和[数据库](#数据库)打交道；当一条查询慢得反常，或者返回的结果不符合预期时，要找到原因，就得知道 [DBMS](#数据库管理系统) 内部在做什么。\n\n日常交流里，“我们用的[数据库](#数据库)是 MySQL”这样的说法不会引起误解。但本课需要更严格的用词：MySQL、Oracle、MongoDB、Snowflake 都不是[数据库](#数据库)，而是**[数据库管理系统](#数据库管理系统)**（Database Management System，[DBMS](#数据库管理系统)），即管理[数据库](#数据库)的软件，负责往[数据库](#数据库)里插入数据、删除数据、从中检索数据。请人举几个[数据库](#数据库)的例子，得到的回答多半是 PostgreSQL、SQL Server 这些名字，按严格的定义，它们都答错了。[数据库](#数据库)是数据本身，[DBMS](#数据库管理系统) 是管理它的程序，这门课研究的是后者。"
+  },
+  {
+   "chunk_id": 204,
+   "seq": 10,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 1. 数据库是什么 (part 2)",
+   "page_start": 15,
+   "page_end": 16,
+   "char_count": 404,
+   "content": "的回答多半是 PostgreSQL、SQL Server 这些名字，按严格的定义，它们都答错了。[数据库](#数据库)是数据本身，[DBMS](#数据库管理系统) 是管理它的程序，这门课研究的是后者。\n\n本讲用一个贯穿始终的例子：为一家类似 Spotify 的数字音乐商店建一个[数据库](#数据库)，记录艺术家（Artist）的信息，以及这些艺术家发行的专辑（Album）。\n![PPT 第 16 页](slides/page-18.png)\n\n\n> 💬 **旁注**\n> Andy 公布过他心中事物的重要性排序：第一位是妻子和女儿，第二位是数据库，其余的都无关紧要。他希望一个学期下来，你也能体会到数据库为什么值得排在这么靠前的位置。\n>\n> *原话：“I love databases, but they're the second most important thing in my life.”*"
+  },
+  {
+   "chunk_id": 205,
+   "seq": 11,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 2. 自己管理数据：平面文件方案 > 2.1 用 CSV 文件存储音乐商店",
+   "page_start": 17,
+   "page_end": 18,
+   "char_count": 651,
+   "content": "在引入任何专门的软件之前，先试试最直接的做法：把数据存成逗号分隔值（Comma-Separated Values，CSV）文件，由应用程序自己读写。这种每行一条记录、没有任何附加结构的文件称为**[平面文件](#平面文件)**（Flat File）。每个实体各用一个文件：\n![PPT 第 17 页](slides/page-19.png)\n\n\n```text\nartists.csv —— Artist(name, year, country)\n\"Wu-Tang Clan\",1992,\"USA\"\n\"Notorious BIG\",1992,\"USA\"\n\"GZA\",1990,\"USA\"\n\nalbums.csv —— Album(name, artist, year)\n\"Enter the Wu-Tang\",\"Wu-Tang Clan\",1993\n\"St.Ides Mix Tape\",\"Wu-Tang Clan\",1994\n\"Liquid Swords\",\"GZA\",1990\n```\n\n艺术家的 `year` 是出道（或单飞）的年份，专辑的 `year` 是发行年份。应用每次要读或改一条记录，都得重新解析这些文件。要查 GZA 单飞的年份，程序大致是这样：\n\n```python\nfor line in file.readlines():\n  record = parse(line)\n  if record[0] == \"GZA\":\n    print(int(record[1]))\n```"
+  },
+  {
+   "chunk_id": 206,
+   "seq": 12,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 2. 自己管理数据：平面文件方案 > 2.1 用 CSV 文件存储音乐商店 (part 2)",
+   "page_start": 17,
+   "page_end": 18,
+   "char_count": 305,
+   "content": "e in file.readlines():\n  record = parse(line)\n  if record[0] == \"GZA\":\n    print(int(record[1]))\n```\n\n这段代码能跑，但它依赖的约定全都只存在于程序员的脑子里。文件里没有任何结构能帮程序直接跳到 GZA 那一行，所以它只能从第一行读到最后一行。名字在第 0 列、年份在第 1 列，是写代码的人记住的约定，文件本身并不记录这件事。CSV 里一切都是字符串，年份之所以能变成整数，全靠程序员记得写 `int()`。一旦有人调换了列的顺序，或者在年份一栏写进了别的东西，这段程序要么悄悄给出错误的答案，要么直接崩溃。"
+  },
+  {
+   "chunk_id": 207,
+   "seq": 13,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 2. 自己管理数据：平面文件方案 > 2.2 平面文件的三类缺陷",
+   "page_start": 19,
+   "page_end": 21,
+   "char_count": 782,
+   "content": "第一类问题关于**[数据完整性](#数据完整性)**（Data Integrity），即[数据库](#数据库)里的内容是否与它所描述的现实保持一致。[平面文件](#平面文件)在这方面几乎没有防线。albums.csv 的每一行都用字符串写着艺术家的名字，只要有一行写成 `Wu Tang Clan`（少了连字符），程序就会认为这是另一支乐队，而现实中它们是同一个。有人把某张专辑的年份改成一段非法的字符串，也没有任何东西会阻止他。一张专辑如果由多位艺术家合作完成，`artist` 字段只有一个位置，装不下。删掉一位还有专辑的艺术家，albums.csv 里就会留下指向不存在记录的名字，这和 C 里的悬空指针（dangling pointer）是同一种错误。本讲的示例数据里就有一个现成的例子：Liquid Swords 的发行年份在 PPT 第 17 页的 CSV 里是 1990，在第 31 页的表格里是 1995（后者与实际发行年份一致）。同一个事实记在两处，两处对不上，而[平面文件](#平面文件)没有任何机制能发现这一点。\n![PPT 第 19 页](slides/page-21.png)\n\n\n第二类问题出在实现上。找一条特定的记录只能从头扫描，文件越大越慢。如果要写第二个应用来使用同一份数据，比如旧程序用 Python、新程序用 Rust，解析逻辑就要重写一遍，并且两份实现必须永远保持一致；要是新应用运行在另一台机器上，它甚至无法直接读到这台机器磁盘上的文件。最麻烦的是并发：两个线程同时读出文件、各自修改、再各自写回，后写的会覆盖先写的，先写的那次修改就这样无声无息地丢了。Andy 用银行账户来说明后果：你存进去的一笔钱，因为恰好有人同时在操作同一个文件，就从账上消失了。\n![PPT 第 20 页](slides/page-22.png)"
+  },
+  {
+   "chunk_id": 208,
+   "seq": 14,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 2. 自己管理数据：平面文件方案 > 2.2 平面文件的三类缺陷 (part 2)",
+   "page_start": 19,
+   "page_end": 21,
+   "char_count": 477,
+   "content": "的那次修改就这样无声无息地丢了。Andy 用银行账户来说明后果：你存进去的一笔钱，因为恰好有人同时在操作同一个文件，就从账上消失了。\n![PPT 第 20 页](slides/page-22.png)\n\n第三类问题关于**[持久性](#持久性)**（Durability），即已经写入的数据能否在故障中保存下来。程序正在更新一条记录时机器崩溃了，文件可能停在写了一半的状态。这里还有一层操作系统的因素：为了速度，操作系统通常先把程序写入的数据放在内存中的**[页缓存](#页缓存)**（Page Cache）里，稍后再真正写到磁盘（俗称“落盘”），程序必须调用 `fsync` 这样的系统调用，才能确认数据已经落盘。断电恰好发生在这两个时刻之间，程序以为写好了的数据就不见了。此外，真实的服务不能因为一台机器坏了就停摆，需要把数据复制到多台机器上以实现**[高可用](#高可用)**（High Availability），而多份副本怎样保持一致，[平面文件](#平面文件)完全没有考虑。\n![PPT 第 21 页](slides/page-23.png)"
+  },
+  {
+   "chunk_id": 209,
+   "seq": 15,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 2. 自己管理数据：平面文件方案 > 2.2 平面文件的三类缺陷 (part 3)",
+   "page_start": 19,
+   "page_end": 21,
+   "char_count": 800,
+   "content": "*[高可用](#高可用)**（High Availability），而多份副本怎样保持一致，[平面文件](#平面文件)完全没有考虑。\n![PPT 第 21 页](slides/page-23.png)\n\n\n这三类问题的性质不同。完整性问题关心数据的语义能否守住，实现问题关心数据怎样被高效地访问、怎样被多个程序和线程共享，[持久性](#持久性)问题关心数据能否在故障面前活下来。本讲的[约束](#约束)（5.6 节）回答第一类；第 [7](../L7%20Opus%20数据库哈希表%20YugabyteDB%20数据库讲座%20Database%20Hash%20Tables%20YugabyteDB%20Database%20Talk/15-445-lecture-07-hash-tables.md)、[8](../L8%20Astra%20B%2B树%20世界上最好的数据结构%20B%2BTrees%20The%20Best%20Data%20Structure%20in%20the%20World/15-445-lecture-08-indexes-and-filters-i.md)、[9](../L9%20Opus%20向量索引%20倒排索引%20跳表%20布隆过滤器%20Vector%20Indexes%20Inverted%20Indexes%20Skip%20Lists%20Bloom%20Filters/15-445-lecture-09-indexes-and-filters-ii.md)、[10](../L10%20Astra%20数据结构中的闩锁%20Latching%20in%20Data%20Structures/15-445-lecture-10-index-concurrency-control.md) 讲的哈希表和索引回答“怎样快速找到一条记录”"
+  },
+  {
+   "chunk_id": 210,
+   "seq": 16,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 2. 自己管理数据：平面文件方案 > 2.2 平面文件的三类缺陷 (part 4)",
+   "page_start": 19,
+   "page_end": 21,
+   "char_count": 1267,
+   "content": "hing%20in%20Data%20Structures/15-445-lecture-10-index-concurrency-control.md) 讲的哈希表和索引回答“怎样快速找到一条记录”；第 [17](../L17%20Astra%20并发控制理论%20Concurrency%20Control%20Theory/15-445-lecture-17-concurrency-control-theory.md)、[18](../L18%20Astra%20两阶段封锁事务%20Firebolt%20数据库讲座%20Transactions%20with%20Two%20Phase%20Locking%20Firebolt%20Database%20Talk/15-445-lecture-18-two-phase-locking-concurrency-control.md)、[19](../L19%20Opus%20时间戳排序并发控制%20Timestamp%20Ordering%20Concurrency%20Control/15-445-lecture-19-timestamp-ordering-concurrency-control.md)、[20](../L20%20Opus%20多版本并发控制%20MVCC%20Multi%20Version%20Concurrency%20Control/15-445-lecture-20-multi-version-concurrency-control.md) 讲的并发控制回答多个线程同时读写的问题；第 [21](../L21%20Opus%20预写日志与影子分页%20Write%20Ahead%20Logging%20and%20Shadow%20Paging/15-445-lecture-21-database-logging.md)、[22](../L22%20Astra%20数据库恢复%20ClickHouse%20数据库讲座%20Database%20Recovery%20ClickHouse%20Database%20Talk/15-445-lecture-22-database-recovery.md) 讲的日志与恢复回答崩溃之后怎么办；第 [23](../L23%20Opus%20分布式数据库%20上%20Distributed%20Databases%20Pt%201/15-445-lecture-23-distributed-database-systems-i.md)、[24](../L24%20Opus%20分布式数据库%20下%20Distributed%20Databases%20Pt%202/15-445-lecture-24-distributed-database-systems-ii.md) 讲讨论多台机器上的复制。这门课的大部分内容，都是在正面回答[平面文件](#平面文件)方案留下的这些问题。"
+  },
+  {
+   "chunk_id": 211,
+   "seq": 17,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 2. 自己管理数据：平面文件方案 > 2.3 声称的保证不一定兑现",
+   "page_start": 21,
+   "page_end": 21,
+   "char_count": 485,
+   "content": "用了现成的 [DBMS](#数据库管理系统)，这些问题也并不会自动消失。有些数据库系统会默认牺牲安全性和[持久性](#持久性)，来让操作看起来更快。\n\n这不是纸上谈兵。Andy 在课上举了一个当时刚发生的例子：2025 年 8 月下旬，一篇技术博客指出，SurrealDB 在使用 RocksDB 或 SurrealKV 作为存储后端时，必须显式设置环境变量 `SURREAL_SYNC_DATA=true`，否则实例不具备崩溃安全性，数据很容易损坏。换言之，在默认配置下，数据确实写得很快，只是没有可靠地落盘，一旦断电或进程崩溃就可能损坏或丢失；这样测出来的性能，比安全配置下真实能达到的水平更漂亮。博客标题批评的正是这一点：SurrealDB 在用[持久性](#持久性)换取更好看的基准测试成绩。\n\nAndy 的提醒是，用上了 [DBMS](#数据库管理系统)，并不意味着造它的人把这些事情做对了。[^1] 类似的事在数据库行业里并不新鲜。学过这门课之后再去读一份数据库产品的宣传材料，你应该有能力判断它声称的那些性质是否可能成立，以及它把什么代价藏在了默认配置里。"
+  },
+  {
+   "chunk_id": 212,
+   "seq": 18,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 3. 数据库管理系统与数据模型 > 3.1 数据库管理系统",
+   "page_start": 22,
+   "page_end": 22,
+   "char_count": 478,
+   "content": "[平面文件](#平面文件)的这些问题，每个自己管理数据的应用都要重新面对一遍。合理的做法是把它们一次性解决在一个专门的软件里。[数据库管理系统](#数据库管理系统)（[DBMS](#数据库管理系统)）是让应用程序在[数据库](#数据库)中存储和分析信息的软件。**[通用 DBMS](#通用%20DBMS)**（General-Purpose [DBMS](#数据库管理系统)）不为某个特定应用而写，它支持按照某种[数据模型](#数据模型)来定义、创建、查询、更新和管理[数据库](#数据库)。任何应用都可以先告诉它“我的数据长什么样”，再把数据交给它，而不必从零开始处理完整性、并发和故障恢复。\n![PPT 第 22 页](slides/page-25.png)\n\n\n今天几乎所有应用都建立在 [DBMS](#数据库管理系统) 之上，而一个可靠的 [DBMS](#数据库管理系统) 背后是大量工程师多年的投入。Andy 的建议是不要轻易自己写一个：许多人以为自己的需求特殊到现成系统无法满足，其实用 PostgreSQL 这样成熟的通用系统就能走得很远。"
+  },
+  {
+   "chunk_id": 213,
+   "seq": 19,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 3. 数据库管理系统与数据模型 > 3.2 数据模型与模式",
+   "page_start": 23,
+   "page_end": 23,
+   "char_count": 673,
+   "content": "要做到“通用”，[DBMS](#数据库管理系统) 需要一套统一的方式来描述五花八门的数据。**[数据模型](#数据模型)**（Data Model）是描述[数据库](#数据库)中数据的一组概念，它规定了可以存在哪些类型的东西，以及它们之间可以有怎样的联系。**[模式](#模式)**（Schema）是用某个[数据模型](#数据模型)对一批具体数据的描述，它定义了[数据库](#数据库)的结构。没有[模式](#模式)，磁盘上只是一堆没有意义的比特：同样的 8 个字节，可以是一个 64 位整数、一个双精度浮点数，也可以是 8 个字符，只有[模式](#模式)才能告诉系统该怎样理解它们。\n![PPT 第 23 页](slides/page-26.png)\n\n![PPT 第 23 页](slides/page-27.png)\n\n\nAndy 用建筑来类比这几个层次。[数据模型](#数据模型)像建筑学的规则，规定一张建筑图纸里可以出现房间、门、窗这些元素；[模式](#模式)像某一栋房子的蓝图，写明有几个房间、每个房间多大、门开在哪里；按同一张蓝图可以盖出许多栋房子，每一栋就是一个**[实例](#实例)**（Instance），对应[数据库](#数据库)在某一时刻实际存放的数据。换成 C 语言的说法：C 的类型系统规定可以有 `int`、指针、`struct` 这些类型，相当于[数据模型](#数据模型)；一个具体的 `struct artist { ... };` 声明相当于[模式](#模式)；按这个声明定义出来的变量相当于[实例](#实例)。"
+  },
+  {
+   "chunk_id": 214,
+   "seq": 20,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 3. 数据库管理系统与数据模型 > 3.3 常见的数据模型",
+   "page_start": 24,
+   "page_end": 24,
+   "char_count": 681,
+   "content": "[数据模型](#数据模型)不止一种，按用途大致可以分成下面几组：\n![PPT 第 24 页](slides/page-28.png)\n\n![PPT 第 24 页](slides/page-29.png)\n\n![PPT 第 24 页](slides/page-31.png)\n\n\n| [数据模型](#数据模型) | 主要用途 | 说明 |\n|---|---|---|\n| 关系（Relational） | 绝大多数 [DBMS](#数据库管理系统)，本课程的主题 | 数据组织成表，见第 5 节 |\n| 键值（Key/Value） | 简单应用、缓存 | 按键存一个值、按键取回它，接口就像一张哈希表 |\n| 图（Graph）、文档（Document / JSON / XML / Object）、宽列（Wide-Column / Column-family） | 统称 NoSQL | 文档模型见 8.1 节 |\n| 数组（Array：向量、矩阵、张量） | 机器学习、科学计算 | 向量模型见 8.2 节 |\n| 层次（Hierarchical）、网状（Network）、多值（Multi-Value）、语义（Semantic）、实体-联系（Entity-Relationship） | 已过时、遗留系统或罕见 | 层次与网状模型见第 4 节 |\n\n最后一组里的实体-联系模型今天仍常用于数据库设计阶段画概念图，但几乎没有 [DBMS](#数据库管理系统) 直接以它作为存储和查询数据的模型。\n![PPT 第 24 页](slides/page-32.png)"
+  },
+  {
+   "chunk_id": 215,
+   "seq": 21,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 3. 数据库管理系统与数据模型 > 3.3 常见的数据模型 (part 2)",
+   "page_start": 24,
+   "page_end": 24,
+   "char_count": 487,
+   "content": "的实体-联系模型今天仍常用于数据库设计阶段画概念图，但几乎没有 [DBMS](#数据库管理系统) 直接以它作为存储和查询数据的模型。\n![PPT 第 24 页](slides/page-32.png)\n\n\nNoSQL 系统主张放弃[关系模型](#关系模型)和 SQL，以换取灵活性和扩展性。Andy 是 NoSQL 最早的批评者之一，在他看来，事实已经证明了这种批评是对的，因为这些系统如今都在往回加[关系模型](#关系模型)的特性。[^2] 这种“离开[关系模型](#关系模型)，又回到[关系模型](#关系模型)”的往复，8.1 节还会看到。\n![PPT 第 24 页](slides/page-30.png)\n\n\n这门课只讲[关系模型](#关系模型)。原因不只在于它最常见：Andy 把[关系模型](#关系模型)比作算术里的 1 + 1 = 2，它是构建数据库系统最基本的积木。许多看似需要特殊[数据模型](#数据模型)的场景，都可以用[关系模型](#关系模型)表达，尽管那不一定总是最方便的表达方式。\n![PPT 第 24 页](slides/page-33.png)"
+  },
+  {
+   "chunk_id": 216,
+   "seq": 22,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 4. 程序员作为导航员：早期的数据库系统 > 4.1 访问路径由程序员决定",
+   "page_start": 25,
+   "page_end": 25,
+   "char_count": 744,
+   "content": "有了[数据模型](#数据模型)，下一个问题是怎样从[数据库](#数据库)里取出数据。1960 年代末的 IDS、IMS、CODASYL 给出的答案是：由程序员编写[过程式](#过程式)代码，**[访问路径](#访问路径)**（Access Path，即找到所需记录的具体方式）和执行顺序都由程序员依据[数据库](#数据库)当前的内容自己决定。\n![PPT 第 25 页](slides/page-34.png)\n\n\n这三个名字各有来历。IDS（Integrated Data Store）由 Charles Bachman 在通用电气主持开发，最初的版本在 1961 至 1964 年间完成；Bachman 获 1973 年图灵奖时，刊在他获奖演讲稿前的介绍称它为第一个可商用的[数据库管理系统](#数据库管理系统)。IMS 是 IBM 为阿波罗登月计划管理零部件清单而开发的层次型系统，至今仍在一些大型机上运行。CODASYL 是一个标准化组织，它以 IDS 为蓝本制定了网状[数据模型](#数据模型)的标准。\n\nBachman 的图灵奖演讲题为《程序员作为导航员》（The Programmer as Navigator），这个标题准确概括了那个时代的查询方式。演讲列出了程序员在[数据库](#数据库)中移动的七种方式，归结起来是两类：按某个键直接进入一条记录，或者沿着记录之间的联系一步步移动，比如顺序访问“下一条”、从一个集合的属主（owner）走到它的成员（member）、从成员回到属主。其中有一种键叫数据库键，它是记录创建时分配给它的永久虚拟内存地址。Bachman 认为，把这些方法组合起来使用，程序员就获得了在大型[数据库](#数据库)中自由穿行、只访问所需记录的能力。"
+  },
+  {
+   "chunk_id": 217,
+   "seq": 23,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 4. 程序员作为导航员：早期的数据库系统 > 4.1 访问路径由程序员决定 (part 2)",
+   "page_start": 25,
+   "page_end": 25,
+   "char_count": 691,
+   "content": "员回到属主。其中有一种键叫数据库键，它是记录创建时分配给它的永久虚拟内存地址。Bachman 认为，把这些方法组合起来使用，程序员就获得了在大型[数据库](#数据库)中自由穿行、只访问所需记录的能力。\n\n这个方案的代价就藏在“自己决定”几个字里。这相当于在图书馆找书时不允许报书名，只能给出一条路线：三楼，左侧第二排，从左数第十五本。路线正确，书一定能找到；但图书馆一旦重新排列书架，所有写好的路线都会失效。IMS 正是这样：建表时就要选定用树结构还是哈希结构存储。哈希结构不支持范围扫描，树结构的点查询效率不如哈希，选错之后，所有依赖这张表的应用代码都要重写。数据库键的问题更直接：它是一个物理地址，相当于 C 程序把某个 `struct` 的地址存进另一条记录里；地址是永久的，意味着记录一旦创建就不能在存储中随意挪动，存储层失去了重新组织数据的自由。Andy 对这种设计的评价是“糟透了的主意”，因为它要求程序员准确知道数据在系统中如何存储，再针对这种存储方式编写代码。[^3]\n\n具体看一个查询：找出在 DJ Mooshoo 致敬混音带（Mooshoo Tribute）上出现的所有艺术家的名字。在 CODASYL 风格的系统里，“某位艺术家出现在某张专辑上”这件事用一种中间记录 APPEARS 表示，它同时属于两个集合：以专辑为属主的 APPEARS_ALBUM，和以艺术家为属主的 ARTIST_APPEARS。查询写出来是这样：\n![PPT 第 25 页](slides/page-37.png)\n\n![PPT 第 25 页](slides/page-38.png)"
+  },
+  {
+   "chunk_id": 218,
+   "seq": 24,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 4. 程序员作为导航员：早期的数据库系统 > 4.1 访问路径由程序员决定 (part 3)",
+   "page_start": 25,
+   "page_end": 25,
+   "char_count": 561,
+   "content": "术家为属主的 ARTIST_APPEARS。查询写出来是这样：\n![PPT 第 25 页](slides/page-37.png)\n\n![PPT 第 25 页](slides/page-38.png)\n\n\n```text\nPROCEDURE GET_ARTISTS_FOR_ALBUM;\nBEGIN\n  /* Declare variables */\n  DECLARE ARTIST_RECORD ARTIST;\n  DECLARE APPEARS_RECORD APPEARS;\n  DECLARE ALBUM_RECORD ALBUM;\n\n  /* Start navigation */\n  FIND ALBUM USING ALBUM.NAME = \"Mooshoo Tribute\"\n    ON ERROR DISPLAY \"Album not found\" AND EXIT;\n\n  /* For each appearance on the album */\n  FIND FIRST APPEARS WITHIN APPEARS_ALBUM OF ALBUM_RECORD\n    ON ERROR DISPLAY \"No artists found for this album\" AND EXIT;"
+  },
+  {
+   "chunk_id": 219,
+   "seq": 25,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 4. 程序员作为导航员：早期的数据库系统 > 4.1 访问路径由程序员决定 (part 4)",
+   "page_start": 25,
+   "page_end": 25,
+   "char_count": 544,
+   "content": "ITHIN APPEARS_ALBUM OF ALBUM_RECORD\n    ON ERROR DISPLAY \"No artists found for this album\" AND EXIT;\n\n  /* Loop through the set of APPEARS */\n  REPEAT\n    /* Navigate to the corresponding artist */\n    FIND OWNER WITHIN ARTIST_APPEARS OF APPEARS_RECORD\n      ON ERROR DISPLAY \"Error finding artist\";\n    /* Display artist name */\n    DISPLAY ARTIST_RECORD.NAME;\n    /* Move to the next APPEARS record in the set */\n    FIND NEXT APPEARS WITHIN APPEARS_ALBUM OF ALBUM_RECORD\n      ON ERROR EXIT;\n  END REPEAT;\nEND PROCEDURE;\n```\n\n这段代码描述的是一条导航路线："
+  },
+  {
+   "chunk_id": 220,
+   "seq": 26,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 4. 程序员作为导航员：早期的数据库系统 > 4.1 访问路径由程序员决定 (part 5)",
+   "page_start": 25,
+   "page_end": 25,
+   "char_count": 749,
+   "content": "APPEARS_ALBUM OF ALBUM_RECORD\n      ON ERROR EXIT;\n  END REPEAT;\nEND PROCEDURE;\n```\n\n这段代码描述的是一条导航路线：\n\n```text\nALBUM \"Mooshoo Tribute\"\n   │ FIND FIRST APPEARS WITHIN APPEARS_ALBUM\n   ▼\nAPPEARS ──FIND NEXT──▶ APPEARS ──FIND NEXT──▶ APPEARS ──FIND NEXT──▶ 集合结束，EXIT\n   │                      │                      │\n   │ FIND OWNER WITHIN    │ FIND OWNER ...       │ FIND OWNER ...\n   │ ARTIST_APPEARS       │                      │\n   ▼                      ▼                      ▼\nARTIST                 ARTIST                 ARTIST\nDISPLAY NAME           DISPLAY NAME           DISPLAY NAME\n```\n\n熟悉链表的读者会认出这个结构。CODASYL 的集合本质上是一条链表：从属主出发，依次串起所有成员，每个成员记录里存着指向下一个成员、上一个成员和属主的指针（见 PPT 第 26 页右侧的示意图，那是一条首尾相接的环形链）。把环形链简化成以 `NULL` 结尾的单链表，上面的查询翻译成 C 大致是："
+  },
+  {
+   "chunk_id": 221,
+   "seq": 27,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 4. 程序员作为导航员：早期的数据库系统 > 4.1 访问路径由程序员决定 (part 6)",
+   "page_start": 25,
+   "page_end": 25,
+   "char_count": 500,
+   "content": "每个成员记录里存着指向下一个成员、上一个成员和属主的指针（见 PPT 第 26 页右侧的示意图，那是一条首尾相接的环形链）。把环形链简化成以 `NULL` 结尾的单链表，上面的查询翻译成 C 大致是：\n\n```c\n/* Walk the APPEARS set owned by the album, then jump to each member's owner artist */\nfor (struct appears *p = album->first_appears; p != NULL; p = p->next_in_album)\n    printf(\"%s\\n\", p->artist->name);\n```\n\n这段代码的要害在于它把执行计划写死了。它选择从专辑出发去找艺术家；另一种写法是遍历所有艺术家，逐个检查他们的 APPEARS 集合里有没有这张专辑。哪一种更快，取决于艺术家有多少、专辑有多少、按名字找一张专辑有没有捷径，而这些条件今天是一个样子，一年以后可能完全不同。程序员写代码时依据的是当时的数据，数据变了，查询要么变慢，要么在存储结构调整之后直接失效，只能重写。"
+  },
+  {
+   "chunk_id": 222,
+   "seq": 28,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 4. 程序员作为导航员：早期的数据库系统 > 4.2 同一个查询的声明式写法",
+   "page_start": 25,
+   "page_end": 25,
+   "char_count": 696,
+   "content": "同一个查询也可以用 SQL 来写（SQL 出现在[关系模型](#关系模型)之后，这里先借它来对照）：\n\n```sql\nSELECT ARTIST.NAME\n  FROM ARTIST, APPEARS, ALBUM\n WHERE ARTIST.ID=APPEARS.ARTIST_ID\n   AND APPEARS.ALBUM_ID=ALBUM.ID\n   AND ALBUM.NAME=\"Mooshoo Tribute\"\n```\n\n这是 SQL 第一次出现，先认识它的骨架。`FROM` 子句列出查询要用到的表，这里是 ARTIST、APPEARS、ALBUM 三张。`WHERE` 子句给出条件，只有满足全部条件的行组合才会留下：前两个条件把三张表中相互对应的行配成对，第三个条件只保留名为 Mooshoo Tribute 的专辑。`SELECT` 后面列出要输出的列，这里只要艺术家的名字，`ARTIST.NAME` 表示 ARTIST 表的 NAME 列。（标准 SQL 中字符串常量用单引号，双引号用来括住表名、列名这类标识符。这里的双引号在 MySQL 的默认配置下可以运行，在 PostgreSQL 中会被当成列名而报错，自己写 SQL 时请用单引号。）\n\n这段 SQL 里没有任何一个字符是在说“我要这些艺术家的名字”之外还顺手描述数据在磁盘上如何组织、指针指向哪一块内存，它也没有规定先找专辑还是先找艺术家。它只说明想要什么样的结果，至于怎样得到这个结果，由 [DBMS](#数据库管理系统) 决定。Andy 说，这个想法今天看来理所当然，在当时却足以让人大开眼界。[^4]"
+  },
+  {
+   "chunk_id": 223,
+   "seq": 29,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 4. 程序员作为导航员：早期的数据库系统 > 4.3 1974 年的大辩论",
+   "page_start": 26,
+   "page_end": 26,
+   "char_count": 733,
+   "content": "两种思路的正面交锋发生在 1974 年 5 月 1 日至 3 日于密歇根州安娜堡召开的 ACM SIGFIDET 研讨会上，议题是[数据库](#数据库)的“集合视图”（即 CODASYL 的网状模型）与关系视图之间的异同。辩论的两位主角是[关系模型](#关系模型)的提出者 Ted Codd 和 CODASYL 一方的代表 Charles Bachman。与他们同时代的 Jim Gray 和 Michael Stonebraker 也是关系数据库早期的重要人物，Stonebraker 后来主持开发了 Ingres 和 Postgres。这四个人后来都获得了图灵奖。\n![PPT 第 26 页](slides/page-40.png)\n\n\n双方的主要论点如下。表中的 DBTG 指 CODASYL 下属的数据库任务组（Data Base Task Group）提出的网状模型标准；[联机事务处理](#联机事务处理)（Online Transaction Processing，[OLTP](#联机事务处理)）指银行转账、下订单这类频繁读写少量记录的应用。\n\n| COBOL/CODASYL 阵营 | 关系阵营 |\n|---|---|\n| [关系模型](#关系模型)太数学化，普通程序员不可能理解这些新式语言 | 像 DBTG 提案这样复杂的东西，不可能是数据管理的正确方式 |\n| 即使程序员学会了这些语言，也无法高效地实现它们 | 任何面向集合的查询，用 DBTG 的[数据操纵语言](#数据操纵语言)来写都太困难 |\n| [联机事务处理](#联机事务处理)应用需要的是面向单条记录的操作 | CODASYL 模型没有形式化的基础，无法定义其中复杂操作的语义 |"
+  },
+  {
+   "chunk_id": 224,
+   "seq": 30,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 4. 程序员作为导航员：早期的数据库系统 > 4.3 1974 年的大辩论 (part 2)",
+   "page_start": 26,
+   "page_end": 26,
+   "char_count": 631,
+   "content": "G 的[数据操纵语言](#数据操纵语言)来写都太困难 |\n| [联机事务处理](#联机事务处理)应用需要的是面向单条记录的操作 | CODASYL 模型没有形式化的基础，无法定义其中复杂操作的语义 |\n\n五十年后回头看，关系阵营赢了，关系型数据库至今仍是主流。CODASYL 阵营的第一条担忧被 SQL 的普及直接否定。第二条最值得认真对待：把“怎么算”交给 [DBMS](#数据库管理系统) 去决定，[DBMS](#数据库管理系统) 真能算得快吗？回答这个问题的正是[查询优化](#查询优化)器，我们将在第 [15](../L15%20Opus%20查询优化器%20上%20Database%20Query%20Optimizers%20Part%201/15-445-lecture-15-query-planning-and-optimization-i.md)、[16](../L16%20Astra%20查询优化%20下%20Query%20Optimization%20Part%202/15-445-lecture-16-query-planning-and-optimization-ii.md) 讲看到它的工作方式。第三条担忧也没有消失，几十年后它以 NoSQL 和文档数据库的形式重新出现，8.1 节会回到这里。至于 IMS，它并没有消亡，Andy 提到至今仍有机构在为它付费维护。一个系统一旦承载了关键业务，要把它换掉，往往比当初建它还难。"
+  },
+  {
+   "chunk_id": 225,
+   "seq": 31,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.1 把“数据是什么”和“数据怎么存”分开",
+   "page_start": 27,
+   "page_end": 27,
+   "char_count": 714,
+   "content": "第 4 节的种种问题有同一个来源：程序员写下的每一条查询，都依赖于数据的存储方式。Ted Codd 在 IBM 研究院注意到，每次修改物理层，人们都要重写数据库系统。他在 1969 年提出了[关系模型](#关系模型)，1970 年以《大型共享[数据库](#数据库)的关系[数据模型](#数据模型)》（A Relational Model of Data for Large Shared Data Banks）为题发表在《ACM 通讯》上。论文摘要开宗明义：大型[数据库](#数据库)的未来用户，应当不必了解数据在机器内部是如何组织的。\n\n[关系模型](#关系模型)相当于允许读者直接报书名：数据是什么，由[关系](#关系)来描述；数据存在哪里、如何查找，由 [DBMS](#数据库管理系统) 负责，书架可以随时重排，读者无须知道。\n\n**[关系模型](#关系模型)**（Relational Model）定义了三个方面：\n\n- **结构**（Structure）：定义[数据库](#数据库)中有哪些[关系](#关系)、[关系](#关系)中有什么内容，而这个定义与它们的物理表示无关。每个[关系](#关系)有一组[属性](#属性)，每个[属性](#属性)有一个取值范围。\n- **完整性**（Integrity）：保证[数据库](#数据库)的内容满足[约束](#约束)，比如人的年龄不能是负数。\n- **操纵**（Manipulation）：以[关系](#关系)（集合）为单位访问和修改[数据库](#数据库)内容的[声明式](#声明式)接口。程序员只说明想要什么结果，由 [DBMS](#数据库管理系统) 决定最高效的执行计划。"
+  },
+  {
+   "chunk_id": 226,
+   "seq": 32,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.1 把“数据是什么”和“数据怎么存”分开 (part 2)",
+   "page_start": 27,
+   "page_end": 27,
+   "char_count": 415,
+   "content": "ation）：以[关系](#关系)（集合）为单位访问和修改[数据库](#数据库)内容的[声明式](#声明式)接口。程序员只说明想要什么结果，由 [DBMS](#数据库管理系统) 决定最高效的执行计划。\n\n“结构”一条里藏着[关系模型](#关系模型)最关键的设计：数据之间的联系通过**值**来表达，而不是通过物理指针。记录一张专辑属于哪位艺术家，[关系模型](#关系模型)存的是艺术家的编号 103，而不是这位艺术家的记录在磁盘上的地址或偏移量。用 C 来对照，前者像用数组下标引用另一个元素，后者像直接保存一个指针：整个数组搬到内存的另一处，下标依然有效，指针却全部作废。联系用值来表达，[DBMS](#数据库管理系统) 才有了随意重排数据的自由。\n\n两者分开之后，新的问题随之出现：程序员不再知道数据如何存储，又该怎样告诉系统自己需要什么？第 6 节回答这个问题。在那之前，先把[关系模型](#关系模型)的各个组成部分看清楚。"
+  },
+  {
+   "chunk_id": 227,
+   "seq": 33,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.2 数据独立性（Data Independence）",
+   "page_start": 28,
+   "page_end": 28,
+   "char_count": 777,
+   "content": "把用户和应用与底层的数据表示隔离开，称为**[数据独立性](#数据独立性)**。用户只需关心上层的应用逻辑；[DBMS](#数据库管理系统) 则根据运行环境、[数据库](#数据库)的内容和**[工作负载](#工作负载)**（Workload，即系统实际要处理的查询与更新的总体特征）来决定数据的布局，并在这些因素变化时重新优化。物理层的改变不会让应用出错。\n\n[DBMS](#数据库管理系统) 内部把对数据的描述分成几层，图中应用程序以下的各层都由 [DBMS](#数据库管理系统) 负责：\n\n```mermaid\nflowchart TB\n    A1[\"应用程序\"] --- E1[\"外模式<br/>视图（SQL）\"]\n    A2[\"应用程序\"] --- E2[\"外模式<br/>视图（SQL）\"]\n    E1 ---|\"逻辑数据独立性\"| L[\"逻辑模式<br/>表、列、约束（SQL）\"]\n    E2 --- L\n    L ---|\"物理数据独立性\"| P[\"物理模式<br/>页、文件、区\"]\n    P --- S[(\"数据库存储\")]\n```\n\n最底层是磁盘上的[数据库](#数据库)存储。**[物理模式](#物理模式)**（Physical Schema）描述数据在页、文件、区（extent）中如何组织，每一个比特放在存储介质的什么位置、怎样排列。**[逻辑模式](#逻辑模式)**（Logical Schema）定义[数据库](#数据库)有哪些表、每张表有哪些列、各列是什么类型、有哪些[约束](#约束)，用 SQL 声明。**[外模式](#外模式)**（External Schema）是提供给某个应用看的那部分数据，用 SQL 的**[视图](#视图)**（View）来定义，不同的应用可以有各自的[外模式](#外模式)。"
+  },
+  {
+   "chunk_id": 228,
+   "seq": 34,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.2 数据独立性（Data Independence） (part 2)",
+   "page_start": 28,
+   "page_end": 28,
+   "char_count": 548,
+   "content": "*[外模式](#外模式)**（External Schema）是提供给某个应用看的那部分数据，用 SQL 的**[视图](#视图)**（View）来定义，不同的应用可以有各自的[外模式](#外模式)。\n\n层与层之间的隔离带来两种独立性。**[物理数据独立性](#物理数据独立性)**（Physical Data Independence）位于[逻辑模式](#逻辑模式)与[物理模式](#物理模式)之间：可以改变数据的物理存储方式，比如换一种文件组织、加一个索引，而不影响[逻辑模式](#逻辑模式)，也就不影响应用。这正是 IMS 缺少的东西。**[逻辑数据独立性](#逻辑数据独立性)**（Logical Data Independence）位于[外模式](#外模式)与[逻辑模式](#逻辑模式)之间：[逻辑模式](#逻辑模式)发生变化时，可以通过调整[视图](#视图)，让应用看到的数据保持原样。\n\nAndy 举过一个[外模式](#外模式)的例子。假设有一张表记录了这门课的全部学生，其中有一列是密码。并不是每个访问这张表的应用都该看到密码，这时可以定义一个不含密码列的[视图](#视图)，只让这些应用访问[视图](#视图)。[视图](#视图)是在[逻辑模式](#逻辑模式)之上又加的一层抽象。"
+  },
+  {
+   "chunk_id": 229,
+   "seq": 35,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.2 数据独立性（Data Independence） (part 3)",
+   "page_start": 28,
+   "page_end": 28,
+   "char_count": 413,
+   "content": "是密码。并不是每个访问这张表的应用都该看到密码，这时可以定义一个不含密码列的[视图](#视图)，只让这些应用访问[视图](#视图)。[视图](#视图)是在[逻辑模式](#逻辑模式)之上又加的一层抽象。\n\n（[DBMS](#数据库管理系统) 离不开操作系统，却常常要绕开操作系统提供的机制，自己管理内存和磁盘。两者之间的这种紧张关系，第 [3](../L3%20Opus%20数据库存储%20文件%20页%20元组%20Database%20Storage%20Files%20Pages%20Tuples/15-445-lecture-03-database-storage-i.md)、[4](../L4%20Opus%20内存管理与缓冲池%20Memory%20Management%20and%20Buffer%20Pools/15-445-lecture-04-memory-management.md) 讲会展开。）"
+  },
+  {
+   "chunk_id": 230,
+   "seq": 36,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.3 关系、元组与域",
+   "page_start": 29,
+   "page_end": 29,
+   "char_count": 731,
+   "content": "**[关系](#关系)**（Relation）是一个无序集合，其中每个元素都是一组[属性](#属性)值之间的联系，这组值共同描述一个实体。**[元组](#元组)**（Tuple）就是[关系](#关系)中的一个元素，即一组[属性](#属性)值。每个**[属性](#属性)**（Attribute）都有一个**[域](#域)**（Domain），即这个[属性](#属性)允许取值的集合：在多数系统中，`INT` 类型的列的[域](#域)是 −2³¹ 到 2³¹−1 之间的整数，而 `year` 这样的列还可以用[约束](#约束)进一步限定。\n![PPT 第 29 页](slides/page-45.png)\n\n\n`Artist(name, year, country)`：\n\n| name | year | country |\n|---|---|---|\n| Wu-Tang Clan | 1992 | USA |\n| Notorious BIG | 1992 | USA |\n| GZA | 1990 | USA |\n\n有 n 个[属性](#属性)的[关系](#关系)称为 n 元[关系](#关系)（n-ary relation），它等同于一张有 n 列的表。本课程中“[关系](#关系)”与“表”混用，[元组](#元组)即表中的行，[属性](#属性)即列。（到第 [6](../L6%20Opus%20列存数据库%20Column%20Store%20Databases/15-445-lecture-06-storage-models-and-compression.md) 讲讨论行存储与列存储时，“行”和“列”在物理层面分别意味着什么，会变得很重要。）"
+  },
+  {
+   "chunk_id": 231,
+   "seq": 37,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.3 关系、元组与域 (part 2)",
+   "page_start": 29,
+   "page_end": 29,
+   "char_count": 466,
+   "content": "abases/15-445-lecture-06-storage-models-and-compression.md) 讲讨论行存储与列存储时，“行”和“列”在物理层面分别意味着什么，会变得很重要。）\n\n“无序”二字值得停一下。[关系](#关系)是集合，集合里的元素没有先后，表中第一行、第二行的说法在[关系模型](#关系模型)里没有意义。这看似是数学上的讲究，实际上是留给 [DBMS](#数据库管理系统) 的自由：既然用户不能依赖行的顺序，[DBMS](#数据库管理系统) 就可以按任何对性能有利的方式存放它们。同样因为是集合，一个[关系](#关系)里不应有两个完全相同的[元组](#元组)；定义了[主键](#主键)之后，任意两个[元组](#元组)至少在[主键](#主键)上不同，其余[属性](#属性)的值则可以完全一样。\n\n[属性](#属性)值通常是原子的标量，比如一个整数或一个字符串。早期的[关系模型](#关系模型)要求如此；如今许多系统也允许值是列表或嵌套的数据结构（比如 JSON），8.1 节会看到这件事的来龙去脉。"
+  },
+  {
+   "chunk_id": 232,
+   "seq": 38,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.3 关系、元组与域 (part 3)",
+   "page_start": 29,
+   "page_end": 29,
+   "char_count": 508,
+   "content": "属性](#属性)值通常是原子的标量，比如一个整数或一个字符串。早期的[关系模型](#关系模型)要求如此；如今许多系统也允许值是列表或嵌套的数据结构（比如 JSON），8.1 节会看到这件事的来龙去脉。\n\n每个[域](#域)都包含一个特殊的值 **[NULL](#NULL)**（如果该[属性](#属性)允许为空），表示这个[元组](#元组)在该[属性](#属性)上的值未知或未定义。它和 C 语言的 `NULL` 指针名字相同，意义却不一样。C 的 `NULL` 是一个确定的值，`p == NULL` 的结果非真即假；SQL 的 [NULL](#NULL) 表示“不知道”，任何值与它比较，结果既不是真也不是假，而是“未知”（UNKNOWN），连 `NULL = NULL` 也是如此。要判断一个值是不是 [NULL](#NULL)，需要专门的写法 `IS NULL`，第 [2](../L2%20Opus%20现代%20SQL%20dbt%20数据库讲座%20Modern%20SQL%20dbt%20Database%20Talk/15-445-lecture-02-modern-sql.md) 讲会再提到。"
+  },
+  {
+   "chunk_id": 233,
+   "seq": 39,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.4 主键（Primary Key）",
+   "page_start": 30,
+   "page_end": 30,
+   "char_count": 636,
+   "content": "[关系](#关系)的**[主键](#主键)**唯一标识一个[元组](#元组)。\n\n在 Artist 表中用 `name` 作[主键](#主键)并不可靠，因为乐队重名并不罕见（有些乐队为了避开同名，甚至会去掉名字中的元音字母）。因此数据库设计中常常引入一个人为的编号列作为[主键](#主键)，比如给 Artist 加上 `id`：\n\n`Artist(id, name, year, country)`：\n\n| id | name | year | country |\n|---|---|---|---|\n| 101 | Wu-Tang Clan | 1992 | USA |\n| 102 | Notorious BIG | 1992 | USA |\n| 103 | GZA | 1990 | USA |\n\n[DBMS](#数据库管理系统) 可以通过**[标识列](#标识列)**（Identity Column）自动生成唯一的[主键](#主键)值：内部维护一个计数器，每插入一行就加一。不同系统的写法不同，SQL 标准是 `IDENTITY`，PostgreSQL 和 Oracle 用 `SEQUENCE`，MySQL 用 `AUTO_INCREMENT`。网址里常见的一串递增数字，比如订单号，多半就来自这样的计数器。如果建表时没有定义[主键](#主键)，有些 [DBMS](#数据库管理系统) 会自动创建一个内部[主键](#主键)，例如 SQLite 的 rowid。"
+  },
+  {
+   "chunk_id": 234,
+   "seq": 40,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.4 主键（Primary Key） (part 2)",
+   "page_start": 30,
+   "page_end": 30,
+   "char_count": 499,
+   "content": "串递增数字，比如订单号，多半就来自这样的计数器。如果建表时没有定义[主键](#主键)，有些 [DBMS](#数据库管理系统) 会自动创建一个内部[主键](#主键)，例如 SQLite 的 rowid。\n\n由现实世界中本来就有的[属性](#属性)充当的键称为**[自然键](#自然键)**（Natural Key），例如 CMU 学生的电子邮箱在校内是唯一的；专门为标识而引入、本身没有业务含义的键称为**[代理键](#代理键)**（Surrogate Key），例如上面的 `id`。两者各有代价。[自然键](#自然键)有现实含义，但现实会变化：人会改名，邮箱会停用，看似唯一的东西后来可能出现重复，而[主键](#主键)一旦被别的表引用，改动起来代价很大。[代理键](#代理键)稳定不变，但它不能阻止同一个实体被重复录入两次，需要时还得在自然[属性](#属性)上另加唯一性[约束](#约束)。\n\n[主键](#主键)也可以由多列共同组成。5.5 节的 ArtistAlbum 表就以 (artist_id, album_id) 两列合起来作[主键](#主键)：单看任何一列都有重复，两列的组合才唯一。"
+  },
+  {
+   "chunk_id": 235,
+   "seq": 41,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.5 外键（Foreign Key）与多对多联系",
+   "page_start": 31,
+   "page_end": 31,
+   "char_count": 612,
+   "content": "**[外键](#外键)**规定一个[关系](#关系)中的某个[属性](#属性)对应另一个[关系](#关系)中的一个[元组](#元组)，通常它的值等于另一张表的[主键](#主键)。给 Album 也加上 `id`，并把 `artist` 列改成艺术家的编号：\n![PPT 第 31 页](slides/page-48.png)\n\n`Album(id, name, artist, year)`：\n\n| id | name | artist | year |\n|---|---|---|---|\n| 11 | Enter the Wu-Tang | 101 | 1993 |\n| 22 | St.Ides Mix Tape | ??? | 1994 |\n| 33 | Liquid Swords | 103 | 1995 |\n\n`St.Ides Mix Tape` 那一行的 `artist` 列只能填 `???`。按下面的[关联表](#关联表)，Wu-Tang Clan、Notorious BIG 和 GZA 都出现在这张混音带上，一个 `artist` 字段填不下。这一格的空白与录入者是否细心无关：只要表结构里只有一个位置装艺术家，数据本身携带的信息就注定要在这里丢掉一部分。这正是[平面文件](#平面文件)方案里“一张专辑有多位艺术家怎么办”的问题。\n![PPT 第 31 页](slides/page-50.png)"
+  },
+  {
+   "chunk_id": 236,
+   "seq": 42,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.5 外键（Foreign Key）与多对多联系 (part 2)",
+   "page_start": 31,
+   "page_end": 31,
+   "char_count": 770,
+   "content": "置装艺术家，数据本身携带的信息就注定要在这里丢掉一部分。这正是[平面文件](#平面文件)方案里“一张专辑有多位艺术家怎么办”的问题。\n![PPT 第 31 页](slides/page-50.png)\n\n\n解决办法是把“哪位艺术家出现在哪张专辑上”这件事本身也建成一个[关系](#关系)。**[关联表](#关联表)**（Junction Table）ArtistAlbum 只有两列，每当一位艺术家出现在一张专辑上，就记一行；Album 表则去掉了 `artist` 列。第 4.2 节演示 SQL 时写的 `ARTIST`、`APPEARS`、`ALBUM`，就是这里的 Artist、ArtistAlbum、Album；后文以及第 [15](../L15%20Opus%20查询优化器%20上%20Database%20Query%20Optimizers%20Part%201/15-445-lecture-15-query-planning-and-optimization-i.md)、[16](../L16%20Astra%20查询优化%20下%20Query%20Optimization%20Part%202/15-445-lecture-16-query-planning-and-optimization-ii.md) 讲沿用这一套表名，`APPEARS` 与 ArtistAlbum 是同一张[关联表](#关联表)：\n\n`ArtistAlbum(artist_id, album_id)`：\n\n| artist_id | album_id |\n|---|---|\n| 101 | 11 |\n| 101 | 22 |\n| 103 | 22 |\n| 102 | 22 |\n\n`Album(id, name, year)`："
+  },
+  {
+   "chunk_id": 237,
+   "seq": 43,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.5 外键（Foreign Key）与多对多联系 (part 3)",
+   "page_start": 31,
+   "page_end": 31,
+   "char_count": 716,
+   "content": "| album_id |\n|---|---|\n| 101 | 11 |\n| 101 | 22 |\n| 103 | 22 |\n| 102 | 22 |\n\n`Album(id, name, year)`：\n\n| id | name | year |\n|---|---|---|\n| 11 | Enter the Wu-Tang | 1993 |\n| 22 | St.Ides Mix Tape | 1994 |\n| 33 | Liquid Swords | 1995 |\n\n三张表之间的关系如下：\n\n```mermaid\nerDiagram\n    Artist ||--o{ ArtistAlbum : \"出现于\"\n    Album ||--o{ ArtistAlbum : \"收录\"\n    Artist {\n        int id PK\n        string name\n        int year\n        string country\n    }\n    Album {\n        int id PK\n        string name\n        int year\n    }\n    ArtistAlbum {\n        int artist_id PK, FK\n        int album_id PK, FK\n    }\n```\n\n`artist_id` 是指向 Artist 的[外键](#外键)，`album_id` 是指向 Album 的[外键](#外键)。这样一来，一张专辑可以有任意多位艺术家，一位艺术家也可以出现在任意多张专辑上，这种联系称为多对多联系。"
+  },
+  {
+   "chunk_id": 238,
+   "seq": 44,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.5 外键（Foreign Key）与多对多联系 (part 4)",
+   "page_start": 31,
+   "page_end": 31,
+   "char_count": 698,
+   "content": "rtist 的[外键](#外键)，`album_id` 是指向 Album 的[外键](#外键)。这样一来，一张专辑可以有任意多位艺术家，一位艺术家也可以出现在任意多张专辑上，这种联系称为多对多联系。\n\n[外键](#外键)在 C 里的对应物是指针，而 [DBMS](#数据库管理系统) 替你守住了指针最容易出的错。在[平面文件](#平面文件)里删掉一位艺术家，引用他的地方就成了悬空指针；声明了[外键](#外键)之后，只要 ArtistAlbum 中还有行引用着 103 号艺术家，[DBMS](#数据库管理系统) 就会拒绝删除这位艺术家（也可以声明为级联删除，让引用它的行一并删掉）。[外键](#外键)引用的[元组](#元组)必须存在，这项要求称为**[引用完整性](#引用完整性)**（Referential Integrity）。\n\n用 SQL 声明 ArtistAlbum 表是这样的。`CREATE TABLE` 属于**[数据定义语言](#数据定义语言)**（Data Definition Language，[DDL](#数据定义语言)），用来声明表的结构：\n\n```sql\nCREATE TABLE ArtistAlbum (\n    artist_id INT REFERENCES Artist (id),\n    album_id  INT REFERENCES Album (id),\n    PRIMARY KEY (artist_id, album_id)\n);\n```\n\n`REFERENCES` 声明[外键](#外键)，最后一行声明由两列组成的[主键](#主键)。"
+  },
+  {
+   "chunk_id": 239,
+   "seq": 45,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.6 约束（Constraint）",
+   "page_start": 32,
+   "page_end": 32,
+   "char_count": 721,
+   "content": "**[约束](#约束)**是用户定义的、[数据库](#数据库)的任何[实例](#实例)都必须满足的条件。[约束](#约束)可以检查单个[元组](#元组)内部的数据，也可以跨越整个[关系](#关系)乃至多个[关系](#关系)；任何违反[约束](#约束)的修改，[DBMS](#数据库管理系统) 都会拒绝。唯一键[约束](#约束)和[引用完整性](#引用完整性)（[外键](#外键)）[约束](#约束)最常见。下面的建表语句用到了另外两种：\n\n```sql\nCREATE TABLE Artist (\n name VARCHAR NOT NULL,\n year INT,\n country CHAR(60),\n CHECK (year > 1900)\n);\n```\n\n`VARCHAR` 是变长字符串，`CHAR(60)` 是长度为 60 个字符的定长字符串。`NOT NULL` 要求名字不能为空，`CHECK (year > 1900)` 规定出道年份必须晚于 1900 年。类型本身也是一种[约束](#约束)：`year` 声明为 `INT` 之后，[平面文件](#平面文件)里“年份被写成非法字符串”的问题就不会再出现。\n\nSQL:92 标准还支持全局**[断言](#断言)**（Assertion），可以写任意一条 SQL 查询作为检查条件：\n\n```sql\nCREATE ASSERTION myAssert\n CHECK ( <SQL> );\n```\n\n它的表达能力最强，却很少有人使用，因为太慢。[DBMS](#数据库管理系统) 无从知道任意一条查询依赖哪些数据，只好在每次插入或修改之后都重新执行一遍这条查询，确认条件依然成立。"
+  },
+  {
+   "chunk_id": 240,
+   "seq": 46,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 5. 关系模型（Relational Model） > 5.6 约束（Constraint） (part 2)",
+   "page_start": 32,
+   "page_end": 32,
+   "char_count": 239,
+   "content": "L> );\n```\n\n它的表达能力最强，却很少有人使用，因为太慢。[DBMS](#数据库管理系统) 无从知道任意一条查询依赖哪些数据，只好在每次插入或修改之后都重新执行一遍这条查询，确认条件依然成立。\n\n理论上的[约束](#约束)，也不一定在每个系统里都被严格执行。SQLite 默认采用“类型亲和性”（type affinity），允许往声明为 `INTEGER` 的列里存入字符串，除非建表时显式使用 `STRICT`。在这样的系统里，一些你认为不该发生的事情是可以发生的。"
+  },
+  {
+   "chunk_id": 241,
+   "seq": 47,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.1 两种风格的数据操纵语言",
+   "page_start": 33,
+   "page_end": 33,
+   "char_count": 721,
+   "content": "数据用[关系](#关系)描述之后，还需要一种在[关系](#关系)上表达查询的方法。[DBMS](#数据库管理系统) 向应用暴露的、用来存储和检索数据的接口称为**[数据操纵语言](#数据操纵语言)**（Data Manipulation Language，[DML](#数据操纵语言)）。只读的查询不修改任何数据，但同样属于 [DML](#数据操纵语言)。[DML](#数据操纵语言) 分为两类。\n\n**[过程式](#过程式)**（Procedural）语言在查询中指定寻找结果的高层策略，这些策略以集合或**[包](#包)**（Bag，允许重复元素的集合，也称[多重集](#包)）为操作对象。[关系代数](#关系代数)属于这一类。这里要说清一个分界：Codd 定义的基本运算符按**集合**语义进行，**[包](#包)**语义是 SQL 的默认行为（6.8 节的去重运算 δ 就是为了把两者接起来而补的扩展）；第 [2](../L2%20Opus%20现代%20SQL%20dbt%20数据库讲座%20Modern%20SQL%20dbt%20Database%20Talk/15-445-lecture-02-modern-sql.md) 讲 §2.2 会把这条分界当作解释 SQL 行为的起点。**非过程式**（Non-Procedural）语言，也就是**[声明式](#声明式)**（Declarative）语言，只说明需要什么数据，不说明怎样找到它。**[关系演算](#关系演算)**（Relational Calculus）属于这一类，SQL 的设计也更接近它。\n![PPT 第 33 页](slides/page-54.png)"
+  },
+  {
+   "chunk_id": 242,
+   "seq": 48,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.1 两种风格的数据操纵语言 (part 2)",
+   "page_start": 33,
+   "page_end": 33,
+   "char_count": 645,
+   "content": "不说明怎样找到它。**[关系演算](#关系演算)**（Relational Calculus）属于这一类，SQL 的设计也更接近它。\n![PPT 第 33 页](slides/page-54.png)\n\n\n以统计 artist 表的行数为例：[过程式](#过程式)的做法是写一个循环扫描所有记录、逐条计数；[声明式](#声明式)的做法是写 `SELECT COUNT(*) FROM artist`，至于怎样数，交给 [DBMS](#数据库管理系统)。\n\n两种形式在表达能力上是等价的。[关系演算](#关系演算)在实践中几乎用不到，这门课不讲它。[关系代数](#关系代数)则不同：它的每个运算符，都对应 [DBMS](#数据库管理系统) 执行引擎里一个真实存在的算子。到第 [13](../L13%20Opus%20查询执行%20上%20Query%20Execution%20Part%201/15-445-lecture-13-query-execution-i.md)、[14](../L14%20Opus%20并行查询引擎架构%20SpiralDB%20数据库讲座%20Parallel%20Query%20Engine%20Architectures%20SpiralDB%20Database%20Talk/15-445-lecture-14-query-execution-ii.md) 讲讨论查询执行时，你会发现执行引擎的结构和[关系代数](#关系代数)表达式几乎一模一样。"
+  },
+  {
+   "chunk_id": 243,
+   "seq": 49,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.2 七个基本运算符",
+   "page_start": 34,
+   "page_end": 34,
+   "char_count": 729,
+   "content": "**[关系代数](#关系代数)**是检索和操纵[关系](#关系)中[元组](#元组)的一组基本运算，建立在集合代数之上：[关系](#关系)是无序的、没有重复元素的集合。它最重要的性质是**[封闭性](#封闭性)**（Closure）：每个运算符接收一个或多个[关系](#关系)作为输入，输出一个新的[关系](#关系)。输出仍是[关系](#关系)，就可以作为下一个运算符的输入，于是运算符可以像函数调用 `f(g(x))` 那样层层嵌套，“串联”成复杂的查询。同样，任何 SQL 查询的结果也是一张表，可以再被别的查询使用。\n![PPT 第 34 页](slides/page-55.png)\n\n\n基本运算符有七个：\n\n| 符号 | 名称 |\n|---|---|\n| σ | [选择](#选择)（Select） |\n| π | [投影](#投影)（Projection） |\n| ∪ | [并](#并)（Union） |\n| ∩ | [交](#交)（Intersection） |\n| − | [差](#差)（Difference） |\n| × | [笛卡尔积](#笛卡尔积)（Product） |\n| ⋈ | [连接](#连接)（Join） |\n\n这七个并不都是独立的：[交](#交)可以由[差](#差)表示，$R ∩ S = R − (R − S)$；[连接](#连接)可以由[笛卡尔积](#笛卡尔积)、[选择](#选择)和[投影](#投影)组合得到（6.7 节）。把它们单列出来，是因为它们在查询中太常用，[DBMS](#数据库管理系统) 也会为它们实现专门的算法。\n\n下面逐一介绍，并给出对应的 SQL。示例中的[关系](#关系)都很小，便于手工验证。"
+  },
+  {
+   "chunk_id": 244,
+   "seq": 50,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.3 选择（Select）",
+   "page_start": 35,
+   "page_end": 35,
+   "char_count": 799,
+   "content": "**[选择](#选择)**从一个[关系](#关系)中选出满足**[谓词](#谓词)**（Predicate）的[元组](#元组)子集。[谓词](#谓词)相当于一个过滤器，只保留满足条件的[元组](#元组)；多个[谓词](#谓词)可以用合取（∧，“与”）和析取（∨，“或”）组合起来。\n\n语法：$σ_{predicate}(R)$\n\n`R(a_id, b_id)`：\n\n| a_id | b_id |\n|---|---|\n| a1 | 101 |\n| a2 | 102 |\n| a2 | 103 |\n| a3 | 104 |\n\n$σ_{a_id='a2'}(R)$ 选出 `a_id` 为 a2 的[元组](#元组)：\n\n| a_id | b_id |\n|---|---|\n| a2 | 102 |\n| a2 | 103 |\n\n$σ_{a_id='a2' ∧ b_id>102}(R)$ 再加上 `b_id` 大于 102 的条件：\n\n| a_id | b_id |\n|---|---|\n| a2 | 103 |\n\n后者对应的 SQL：\n\n```sql\nSELECT * FROM R\n WHERE a_id='a2' AND b_id>102;\n```\n\n`SELECT *` 表示输出所有列，[谓词](#谓词)写在 `WHERE` 子句里。\n\n要注意，[关系代数](#关系代数)的“[选择](#选择)”σ 和 SQL 的 `SELECT` 同名，含义却不同。σ 对应的是 SQL 的 `WHERE` 子句，负责筛掉行；SQL 的 `SELECT` 列表决定输出哪些列，对应的是下一节的[投影](#投影) π。一条 `SELECT … FROM … WHERE …` 语句，大致对应 $π(σ(…))$：`FROM` 给出输入的[关系](#关系)，`WHERE` 是 σ，`SELECT` 是 π。"
+  },
+  {
+   "chunk_id": 245,
+   "seq": 51,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.4 投影（Projection）",
+   "page_start": 36,
+   "page_end": 36,
+   "char_count": 653,
+   "content": "**[投影](#投影)**生成一个新[关系](#关系)，其中的[元组](#元组)只包含指定的[属性](#属性)。它可以调整[属性](#属性)的顺序，可以去掉不需要的[属性](#属性)，也可以对[属性](#属性)值做运算，生成派生[属性](#属性)。\n\n语法：$π_{A1,A2,…,An}(R)$\n\n仍用上一节的 R，$π_{b_id-100, a_id}(σ_{a_id='a2'}(R))$ 的结果是：\n\n| b_id-100 | a_id |\n|---|---|\n| 2 | a2 |\n| 3 | a2 |\n\n对应的 SQL：\n\n```sql\nSELECT b_id-100, a_id\n  FROM R WHERE a_id = 'a2';\n```\n\n这个例子一次用到了[投影](#投影)的三种能力：`b_id-100` 是派生[属性](#属性)；它排在 `a_id` 前面，调整了顺序；原来的 `b_id` 列不再出现。实际应用中，用户表里有密码这样的敏感列时，可以用[投影](#投影)把它从输出中去掉。\n\n[投影](#投影)与[选择](#选择)的区别不只在于一个作用于列、一个作用于行。[投影](#投影)的下标是一个表达式列表，每个表达式为每个[元组](#元组)算出一个值；[选择](#选择)的下标是一个[谓词](#谓词)，对每个[元组](#元组)只能得出真或假。把 `b_id-100` 塞进 σ 的下标里没有意义：即便按 C 语言“非零即真”的习惯勉强能够求值，它表达的也不是任何筛选条件。"
+  },
+  {
+   "chunk_id": 246,
+   "seq": 52,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.4 投影（Projection） (part 2)",
+   "page_start": 36,
+   "page_end": 36,
+   "char_count": 693,
+   "content": "下标是一个[谓词](#谓词)，对每个[元组](#元组)只能得出真或假。把 `b_id-100` 塞进 σ 的下标里没有意义：即便按 C 语言“非零即真”的习惯勉强能够求值，它表达的也不是任何筛选条件。\n\n[投影](#投影)和[选择](#选择)能否交换次序？有时可以。上面的表达式交换之后是 $σ_{a_id='a2'}(π_{b_id-100, a_id}(R))$：先[投影](#投影)，再按 `a_id` 筛选，结果不变，因为[投影](#投影)保留了 `a_id` 这一列。但如果[投影](#投影)列表里没有 `a_id`，例如 $π_{b_id-100}(σ_{a_id='a2'}(R))$，交换之后[选择](#选择)要用的 `a_id` 已经被[投影](#投影)丢掉，表达式就不成立了。一般地，只有当[选择](#选择)[谓词](#谓词)用到的[属性](#属性)都保留在[投影](#投影)列表中时，两者才能交换。这类等价变换正是第 [15](../L15%20Opus%20查询优化器%20上%20Database%20Query%20Optimizers%20Part%201/15-445-lecture-15-query-planning-and-optimization-i.md)、[16](../L16%20Astra%20查询优化%20下%20Query%20Optimization%20Part%202/15-445-lecture-16-query-planning-and-optimization-ii.md) 讲[查询优化](#查询优化)器的基本工具。"
+  },
+  {
+   "chunk_id": 247,
+   "seq": 53,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.4 投影（Projection） (part 3)",
+   "page_start": 36,
+   "page_end": 36,
+   "char_count": 324,
+   "content": "timization%20Part%202/15-445-lecture-16-query-planning-and-optimization-ii.md) 讲[查询优化](#查询优化)器的基本工具。\n\n集合语义与 SQL 在这里还有一处差别。按集合语义，[投影](#投影)之后如果出现相同的[元组](#元组)，只保留一个：$π_{a_id}(R)$ 的结果是 {a1, a2, a3} 三个[元组](#元组)，而不是四个。SQL 默认不去重，`SELECT a_id FROM R` 返回四行，其中 a2 出现两次，写成 `SELECT DISTINCT a_id FROM R` 才得到三行。也就是说，SQL 的表是[包](#包)，而不是集合。"
+  },
+  {
+   "chunk_id": 248,
+   "seq": 54,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.5 并、交、差（Union, Intersection, Difference）",
+   "page_start": 37,
+   "page_end": 39,
+   "char_count": 781,
+   "content": "这三个运算都要求两个输入[关系](#关系)具有相同的[属性](#属性)（按[属性](#属性)名匹配），否则结果无法构成一个[关系](#关系)，因为输出[关系](#关系)需要一组确定的[属性](#属性)。示例用下面两个[关系](#关系)（这里的 R 是新的三行[关系](#关系)，与前两节不同）：\n\n`R(a_id, b_id)`：\n\n| a_id | b_id |\n|---|---|\n| a1 | 101 |\n| a2 | 102 |\n| a3 | 103 |\n\n`S(a_id, b_id)`：\n\n| a_id | b_id |\n|---|---|\n| a3 | 103 |\n| a4 | 104 |\n| a5 | 105 |\n\n**[并](#并)**（Union）生成的[关系](#关系)包含在任一输入[关系](#关系)中出现过的所有[元组](#元组)，并去掉重复。语法是 `(R ∪ S)`，对应的 SQL 是：\n\n```sql\n(SELECT * FROM R)\nUNION\n(SELECT * FROM S);\n```\n\n**[交](#交)**（Intersection）只保留在两个输入[关系](#关系)中都出现的[元组](#元组)，语法是 $(R ∩ S)$，SQL 用 `INTERSECT`。**[差](#差)**（Difference）只保留出现在第一个[关系](#关系)、但不出现在第二个[关系](#关系)中的[元组](#元组)，语法是 $(R − S)$，SQL 用 `EXCEPT`：\n![PPT 第 38 页](slides/page-60.png)\n\n![PPT 第 39 页](slides/page-61.png)\n\n\n```sql\n(SELECT * FROM R)\nINTERSECT\n(SELECT * FROM S);"
+  },
+  {
+   "chunk_id": 249,
+   "seq": 55,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.5 并、交、差（Union, Intersection, Difference） (part 2)",
+   "page_start": 37,
+   "page_end": 39,
+   "char_count": 618,
+   "content": "e-60.png)\n\n![PPT 第 39 页](slides/page-61.png)\n\n\n```sql\n(SELECT * FROM R)\nINTERSECT\n(SELECT * FROM S);\n\n(SELECT * FROM R)\nEXCEPT\n(SELECT * FROM S);\n```\n\n`R ∪ S`：\n\n| a_id | b_id |\n|---|---|\n| a1 | 101 |\n| a2 | 102 |\n| a3 | 103 |\n| a4 | 104 |\n| a5 | 105 |\n\n`R ∩ S`：\n\n| a_id | b_id |\n|---|---|\n| a3 | 103 |\n\n`R − S`：\n\n| a_id | b_id |\n|---|---|\n| a1 | 101 |\n| a2 | 102 |\n\nR 和 S 中都有 (a3, 103)，按集合语义它在[并集](#并)中只出现一次，结果是五行。SQL 的 `UNION` 与此一致，会去掉重复；Lecture Notes 中写的 `UNION ALL` 则保留重复，结果是六行，(a3, 103) 出现两次，对应的是[包](#包)语义。`UNION ALL` 不需要去重，执行起来更便宜，所以当你确定不会有重复、或者不在乎重复时，它往往是更好的选择。\n\n[差](#差)不满足交换律：`S − R` 的结果是 (a4, 104) 和 (a5, 105)。"
+  },
+  {
+   "chunk_id": 250,
+   "seq": 56,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.6 笛卡尔积（Product）",
+   "page_start": 40,
+   "page_end": 40,
+   "char_count": 744,
+   "content": "**[笛卡尔积](#笛卡尔积)**生成输入[关系](#关系)中[元组](#元组)的所有可能组合。与前三个运算不同，两个输入[关系](#关系)不必具有相同的[属性](#属性)，输出包含两者的全部[属性](#属性)。\n![PPT 第 40 页](slides/page-63.png)\n\n\n语法：$(R × S)$\n\n仍用上一节的 R 和 S，$R × S$ 的结果是：\n\n| R.a_id | R.b_id | S.a_id | S.b_id |\n|---|---|---|---|\n| a1 | 101 | a3 | 103 |\n| a1 | 101 | a4 | 104 |\n| a1 | 101 | a5 | 105 |\n| a2 | 102 | a3 | 103 |\n| a2 | 102 | a4 | 104 |\n| a2 | 102 | a5 | 105 |\n| a3 | 103 | a3 | 103 |\n| a3 | 103 | a4 | 104 |\n| a3 | 103 | a5 | 105 |\n\n对应的 SQL 有两种写法：\n\n```sql\nSELECT * FROM R CROSS JOIN S;\n\nSELECT * FROM R, S;\n```\n\nR 有 3 个[元组](#元组)，S 有 3 个，结果就是 3 × 3 = 9 个；一般地，$|R × S| = |R| · |S|$ 。用 C 来写，这就是两层嵌套的 `for` 循环，外层遍历 R，内层遍历 S，每一对都输出一次。4.2 节 SQL 里 `FROM ARTIST, APPEARS, ALBUM` 的逗号，按定义就是[笛卡尔积](#笛卡尔积)，`WHERE` 中的条件再从中挑出相互对应的组合。"
+  },
+  {
+   "chunk_id": 251,
+   "seq": 57,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.6 笛卡尔积（Product） (part 2)",
+   "page_start": 40,
+   "page_end": 40,
+   "char_count": 219,
+   "content": "，每一对都输出一次。4.2 节 SQL 里 `FROM ARTIST, APPEARS, ALBUM` 的逗号，按定义就是[笛卡尔积](#笛卡尔积)，`WHERE` 中的条件再从中挑出相互对应的组合。\n\n单独使用时，[笛卡尔积](#笛卡尔积)很少是你真正想要的结果。你想问的是“某张专辑上有哪些艺术家”，而不是“所有艺术家与所有专辑的一切搭配”，后者绝大多数行都是噪声。有意义的是其中满足某种对应关系的那些组合，这就是[连接](#连接)。"
+  },
+  {
+   "chunk_id": 252,
+   "seq": 58,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.7 连接（Join）",
+   "page_start": 41,
+   "page_end": 41,
+   "char_count": 621,
+   "content": "**[连接](#连接)**生成的每个[元组](#元组)，都由两个输入[关系](#关系)各取一个[元组](#元组)组合而成，条件是这两个[元组](#元组)在一个或多个共同[属性](#属性)上取值相同。\n\n语法：$(R ⋈ S)$\n\nR 仍是上一节的三行[关系](#关系)，S 多了一个 `val` [属性](#属性)：\n\n`S(a_id, b_id, val)`：\n\n| a_id | b_id | val |\n|---|---|---|\n| a3 | 103 | XXX |\n| a4 | 104 | YYY |\n| a5 | 105 | ZZZ |\n\nR 和 S 共有 `a_id`、`b_id` 两个[属性](#属性)，只有 (a3, 103) 在两边都出现。求值可以分两步看。先从[笛卡尔积](#笛卡尔积)中找出两边共有[属性](#属性)取值都相同的组合：\n\n| R.a_id | R.b_id | S.a_id | S.b_id | S.val |\n|---|---|---|---|---|\n| a3 | 103 | a3 | 103 | XXX |\n\n其中 `S.a_id`、`S.b_id` 与 R 中的对应列完全重复，去掉之后就是[连接](#连接)的结果：\n\n| a_id | b_id | val |\n|---|---|---|\n| a3 | 103 | XXX |\n\n这两步说明[连接](#连接)可以由前面的运算组合出来："
+  },
+  {
+   "chunk_id": 253,
+   "seq": 59,
+   "heading_path": "CMU 15-445 第 01 讲：关系模型与关系代数（Relational Model & Algebra） > 6. 关系代数（Relational Algebra） > 6.7 连接（Join） (part 2)",
+   "page_start": 41,
+   "page_end": 41,
+   "char_count": 541,
+   "content": "就是[连接](#连接)的结果：\n\n| a_id | b_id | val |\n|---|---|---|\n| a3 | 103 | XXX |\n\n这两步说明[连接](#连接)可以由前面的运算组合出来：\n\n$$\nR \\bowtie S = \\pi_{R.\\mathrm{a\\_id},\\ R.\\mathrm{b\\_id},\\ S.\\mathrm{val}}\\left(\\sigma_{R.\\mathrm{a\\_id} = S.\\mathrm{a\\_id}\\ \\land\\ R.\\mathrm{b\\_id} = S.\\mathrm{b\\_id}}(R \\times S)\\right)\\nonumber\n$$\n\n式中 × 是[笛卡尔积](#笛卡尔积)，σ 留下共有[属性](#属性)两两相等的组合，π 去掉重复的列。像这样按所有同名[属性](#属性)相等来[连接](#连接)、并把同名列合并成一列的[连接](#连接)，称为**[自然连接](#自然连接)**（Natural Join）。\n\n对应的 SQL 有三种写法：\n\n```sql\nSELECT * FROM R NATURAL JOIN S;\n\nSELECT * FROM R JOIN S USING (a_id, b_id);"
+  },
+  {
+   "chunk_id": 254,
+   "seq": 60,
+   "heading_path": "去重",
+   "page_start": 41,
+   "page_end": 41,
+   "char_count": 658,
+   "content": "SELECT * FROM R JOIN S # 不去重. \n    ON R.a_id = S.a_id AND R.b_id = S.b_id;\n```\n\n三种写法的区别在于[连接](#连接)条件由谁决定。`NATURAL JOIN` 让 [DBMS](#数据库管理系统) 自己找出两表所有**同名**的列，按它们相等来[连接](#连接)；`USING` 显式列出按哪几个同名列[连接](#连接)；`ON` 直接写出[连接](#连接)条件，列名不必相同。输出也略有差异：前两种写法中，作为[连接](#连接)条件的同名列只输出一份，`ON` 写法则会把 `R.a_id` 和 `S.a_id` 都保留下来。\n\nAndy 建议始终显式写出[连接](#连接)条件。[^5] [自然连接](#自然连接)的隐患在于它依据的是列名，而列名相同并不代表含义相同。拿本讲自己的表来试：`Artist(id, name, year, country)` 和 `Album(id, name, year)` 有三个同名列，`Artist NATURAL JOIN Album` 会要求艺术家的编号等于专辑的编号、艺术家的名字等于专辑的名字、出道年份等于发行年份，得到的几乎总是空表，偶尔得到的结果也毫无意义。更隐蔽的是，今天写对了的[自然连接](#自然连接)，明天有人给两张表各加一个同名的 `created_at` 列，查询的含义就悄悄变了。如果两表没有任何同名列，[自然连接](#自然连接)还会退化成[笛卡尔积](#笛卡尔积)。"
+  },
+  {
+   "chunk_id": 255,
+   "seq": 61,
+   "heading_path": "去重 (part 2)",
+   "page_start": 41,
+   "page_end": 41,
+   "char_count": 273,
+   "content": "[自然连接](#自然连接)，明天有人给两张表各加一个同名的 `created_at` 列，查询的含义就悄悄变了。如果两表没有任何同名列，[自然连接](#自然连接)还会退化成[笛卡尔积](#笛卡尔积)。\n\n除了这里的[自然连接](#自然连接)，SQL 还有外[连接](#连接)等其他[连接](#连接)形式，第 [2](../L2%20Opus%20现代%20SQL%20dbt%20数据库讲座%20Modern%20SQL%20dbt%20Database%20Talk/15-445-lecture-02-modern-sql.md) 讲会介绍。"
+  },
+  {
+   "chunk_id": 256,
+   "seq": 62,
+   "heading_path": "去重 > 6.8 扩展运算符",
+   "page_start": 42,
+   "page_end": 42,
+   "char_count": 431,
+   "content": "七个基本运算符不足以表达实际查询中的全部需求，[关系代数](#关系代数)后来又扩展了几个运算符：\n\n| 运算符 | 符号 | 作用 |\n|---|---|---|\n| 重命名（Rename） | ρ | 给[关系](#关系)或[属性](#属性)改名，比如一张表与自己[连接](#连接)时区分两份拷贝 |\n| 赋值（Assignment） | R ← S | 把一个表达式的结果存成临时[关系](#关系)，便于分步书写 |\n| 去重（Duplicate Elimination） | δ | 在[包](#包)语义下去掉重复的[元组](#元组)，对应 SQL 的 `DISTINCT` |\n| 聚合（Aggregation） | γ | 分组并计算计数、求和、平均值这类汇总值 |\n| 排序（Sorting） | τ | 按某些[属性](#属性)给结果排序 |\n| 除（Division） | R ÷ S | 找出与 S 中所有[元组](#元组)都有联系的那些值 |"
+  },
+  {
+   "chunk_id": 257,
+   "seq": 63,
+   "heading_path": "去重 > 6.8 扩展运算符 (part 2)",
+   "page_start": 42,
+   "page_end": 42,
+   "char_count": 787,
+   "content": "这类汇总值 |\n| 排序（Sorting） | τ | 按某些[属性](#属性)给结果排序 |\n| 除（Division） | R ÷ S | 找出与 S 中所有[元组](#元组)都有联系的那些值 |\n\n去重运算之所以需要，是因为 SQL 采用[包](#包)语义，重复[元组](#元组)会在[投影](#投影)、[并](#并)等运算中保留下来（6.4、6.5 节）。聚合在第 [2](../L2%20Opus%20现代%20SQL%20dbt%20数据库讲座%20Modern%20SQL%20dbt%20Database%20Talk/15-445-lecture-02-modern-sql.md) 讲的 SQL 中会大量使用，它的实现算法在第 [11](../L11%20Astra%20排序与聚合算法%20MotherDuck%20数据库讲座%20Sorting%20and%20Aggregation%20Algorithms%20MotherDuck%20Database%20Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md) 讲。\n\n除法的含义不太直观，举个例子：设 D 是只含 `album_id` 一个[属性](#属性)、两个[元组](#元组) {11, 22} 的[关系](#关系)，那么 `ArtistAlbum ÷ D` 的结果是 {101}，因为在 5.5 节的数据中，只有 101 号艺术家同时出现在 11 号和 22 号专辑上。\n\n排序值得单独说一句：在纯粹的[关系模型](#关系模型)里，[关系](#关系)是无序集合，所以“排序”这个操作在语义上根本不存在；它之所以成为必需，是因为 SQL 要输出给人看，而人需要有序的列表。这是工程需求反过来给理论打补丁的一个例子。"
+  },
+  {
+   "chunk_id": 258,
+   "seq": 64,
+   "heading_path": "去重 > 7. 从“怎么算”到“要什么” > 7.1 同一个结果，两种求值顺序",
+   "page_start": 43,
+   "page_end": 43,
+   "char_count": 691,
+   "content": "[关系代数](#关系代数)的每个表达式，除了规定结果，还隐含了计算的先后顺序。比较下面两个表达式：\n\n```text\nσ_{b_id=102}(R ⋈ S)      先连接 R 和 S，再筛选 b_id = 102\nR ⋈ (σ_{b_id=102}(S))    先从 S 中筛选 b_id = 102，再与 R 连接\n```\n\n两者的结果总是相同，代价却可能天差地别。设 S 有 10 亿个[元组](#元组)，其中 `b_id=102` 的只有 1 个。为了算出具体的数字，再假设 R 有 1,000 个[元组](#元组)，[连接](#连接)按定义求值（逐对比较 R 与 S 的[元组](#元组)），并且 S 的每个[元组](#元组)都恰好在 R 中有一个匹配。\n\n顺序 A：$σ_{b_id=102}(R ⋈ S)$\n\n| 步骤 | 运算 | 比较次数 | 输出行数 |\n|---|---|---|---|\n| 1 | `R ⋈ S` | 1,000 × 10 亿 = 1 万亿 | 10 亿 |\n| 2 | `σ_{b_id=102}` 作用于上一步结果 | 10 亿 | 1 |\n| 合计 | | 约 1 万亿 | |\n\n顺序 B：$R ⋈ (σ_{b_id=102}(S))$\n\n| 步骤 | 运算 | 比较次数 | 输出行数 |\n|---|---|---|---|\n| 1 | `σ_{b_id=102}(S)` | 10 亿 | 1 |\n| 2 | `R ⋈` 上一步结果 | 1,000 × 1 = 1,000 | 1 |\n| 合计 | | 约 10 亿 | |"
+  },
+  {
+   "chunk_id": 259,
+   "seq": 65,
+   "heading_path": "去重 > 7. 从“怎么算”到“要什么” > 7.1 同一个结果，两种求值顺序 (part 2)",
+   "page_start": 43,
+   "page_end": 43,
+   "char_count": 780,
+   "content": "| 1 | `σ_{b_id=102}(S)` | 10 亿 | 1 |\n| 2 | `R ⋈` 上一步结果 | 1,000 × 1 = 1,000 | 1 |\n| 合计 | | 约 10 亿 | |\n\n按每秒 10 亿次比较粗略估算，顺序 A 需要约 1,000 秒，也就是十几分钟，顺序 B 约 1 秒。差距来自中间结果的大小：顺序 A 先造出 10 亿行的中间结果，再把其中几乎所有行丢掉；顺序 B 在第一步就把 S 缩小到 1 行，后面的[连接](#连接)几乎不花时间。\n\n逐对比较是最笨的[连接](#连接)方法，第 [12](../L12%20Astra%20哈希连接%20排序合并连接%20嵌套循环连接%20Hash%20Joins%20Sort%20Merge%20Joins%20Nested%20Loop%20Join%20Algorithms/15-445-lecture-12-joins-algorithms.md) 讲会介绍更好的[连接](#连接)算法，能大幅降低顺序 A 第 1 步的开销。但无论用哪种算法，顺序 A 都要把 S 的 10 亿行全部送进[连接](#连接)，并产生 10 亿行的中间结果，而顺序 B 在第一步之后只剩 1 行。反过来，如果 S 在 `b_id` 上建有索引（第 [8](../L8%20Astra%20B%2B树%20世界上最好的数据结构%20B%2BTrees%20The%20Best%20Data%20Structure%20in%20the%20World/15-445-lecture-08-indexes-and-filters-i.md) 讲），顺序 B 的第 1 步不必扫描全表，几次查找就能定位到那一行，总代价降到千次比较的量级，与仍按定义求值的顺序 A 相比，差距会扩大到约十亿倍。"
+  },
+  {
+   "chunk_id": 260,
+   "seq": 66,
+   "heading_path": "去重 > 7. 从“怎么算”到“要什么” > 7.1 同一个结果，两种求值顺序 (part 3)",
+   "page_start": 43,
+   "page_end": 43,
+   "char_count": 401,
+   "content": "indexes-and-filters-i.md) 讲），顺序 B 的第 1 步不必扫描全表，几次查找就能定位到那一行，总代价降到千次比较的量级，与仍按定义求值的顺序 A 相比，差距会扩大到约十亿倍。\n\n问题在于，如果换成 Pandas（Python 中常用的数据分析库，用一串方法调用逐步处理表格数据）或者任何[过程式](#过程式)的 [DML](#数据操纵语言)，写查询的人怎么知道该用第二种顺序？他需要知道 S 现在有多少行、`b_id=102` 的**[选择率](#选择率)**（Selectivity，即满足条件的[元组](#元组)占全部[元组](#元组)的比例）有多高、数据在磁盘上怎么分布。而这些都是会随时间变化的东西，今天成立的假设，明天数据涨了十倍就不成立了。把顺序写死在代码里，等于把一份会过期的判断冻结进了程序。这与 4.1 节 CODASYL 的困境如出一辙，只是换了一种语言。"
+  },
+  {
+   "chunk_id": 261,
+   "seq": 67,
+   "heading_path": "去重 > 7. 从“怎么算”到“要什么” > 7.2 声明式查询与查询优化",
+   "page_start": 43,
+   "page_end": 44,
+   "char_count": 773,
+   "content": "更好的做法是只陈述想要的高层结果，比如“取出 R 与 S [连接](#连接)后 `S.b_id` 等于 102 的[元组](#元组)”，然后让 [DBMS](#数据库管理系统) 自己决定执行步骤。SQL 正是这么做的：查询里只表达要算什么，不写怎么算，由 [DBMS](#数据库管理系统) 通过**[查询优化](#查询优化)**（Query Optimization）找出最高效的执行策略。\n\n这个抽象的力量在于，它把“用户需要了解系统内部”这件事彻底移除掉了。写查询的人可以完全不懂索引、不懂[连接](#连接)算法、不懂数据分布，依然能得到高效的执行。他给出意图，系统负责实现意图。正因如此，SQL 成了在关系型 [DBMS](#数据库管理系统) 上编写查询的事实标准。\n\n这里有两点需要分清。第一，[关系模型](#关系模型)本身并不依赖任何一种查询语言。Codd 提出[关系模型](#关系模型)时 SQL 还不存在，Stonebraker 的 Ingres 最初使用的是一种叫 QUEL 的语言；SQL 只是最终胜出的那一种，而且各家 [DBMS](#数据库管理系统) 的 SQL 都有自己的方言，第 [2](../L2%20Opus%20现代%20SQL%20dbt%20数据库讲座%20Modern%20SQL%20dbt%20Database%20Talk/15-445-lecture-02-modern-sql.md) 讲会看到这一点。第二，SQL 是[声明式](#声明式)的，但 [DBMS](#数据库管理系统) 内部仍然要把它变成一棵由[关系代数](#关系代数)运算符组成的树才能执行。[关系代数](#关系代数)并没有被 SQL 取代，它从用户书写查询的语言，变成了 [DBMS](#数据库管理系统) 内部表示和改写查询的语言。"
+  },
+  {
+   "chunk_id": 262,
+   "seq": 68,
+   "heading_path": "去重 > 7. 从“怎么算”到“要什么” > 7.2 声明式查询与查询优化 (part 2)",
+   "page_start": 43,
+   "page_end": 44,
+   "char_count": 434,
+   "content": "成一棵由[关系代数](#关系代数)运算符组成的树才能执行。[关系代数](#关系代数)并没有被 SQL 取代，它从用户书写查询的语言，变成了 [DBMS](#数据库管理系统) 内部表示和改写查询的语言。\n\n回到本讲开头的例子，把两种写法并排放在一起。[平面文件](#平面文件)方案的程序是：\n\n```python\nfor line in file.readlines():\n  record = parse(line)\n  if record[0] == \"GZA\":\n    print(int(record[1]))\n```\n\n同一个查询的 SQL 是：\n\n```sql\nSELECT year FROM artists\n WHERE name = 'GZA';\n```\n\n前者规定了扫描方式、字段位置和类型转换；后者只说要 `artists` 表中名字为 GZA 的那一行的 `year`。表里有十行还是十亿行，`name` 上有没有索引，这条 SQL 都不用改。"
+  },
+  {
+   "chunk_id": 263,
+   "seq": 69,
+   "heading_path": "去重 > 8. 其他数据模型",
+   "page_start": 45,
+   "page_end": 50,
+   "char_count": 91,
+   "content": "[关系模型](#关系模型)是本课程的主题。在它之外，文档模型是目前最主要的替代方案，向量模型则是最新的热点。把它们放回本讲的线索上，就能看出它们绕开了什么，又在哪里重新撞上了老问题。"
+  },
+  {
+   "chunk_id": 264,
+   "seq": 70,
+   "heading_path": "去重 > 8. 其他数据模型 > 8.1 文档数据模型（Document Data Model）",
+   "page_start": 46,
+   "page_end": 47,
+   "char_count": 776,
+   "content": "**[文档数据模型](#文档数据模型)**把数据组织成一组记录文档，每个文档包含一个由具名字段和值构成的层次结构。字段的值可以是标量，可以是一个值的数组，也可以是另一个文档；Lecture Notes 的说法是“指向另一个文档的指针”。两种形式在实际系统中都存在，前者把相关数据直接嵌入，后者只存一个引用。现代实现使用 JSON，较老的系统使用 XML 或自定义的对象表示。MongoDB、CouchDB、Couchbase、DynamoDB、Firebase、RavenDB、MarkLogic 都属于这一类。\n![PPT 第 46 页](slides/page-71.png)\n\n\n文档模型要解决的是一个真实存在的别扭。应用程序通常是面向对象的，一个 Artist 对象里直接包含一个 Album 数组；[关系模型](#关系模型)却要求把它拆进三张表，读回来时再用两次[连接](#连接)拼成对象：\n![PPT 第 47 页](slides/page-72.png)\n\n\n```text\nArtist       ──▶  R1(id, …)\n                      ⋈\nArtistAlbum  ──▶  R2(artist_id, album_id)\n                      ⋈\nAlbum        ──▶  R3(id, …)\n```\n\n程序里的对象与[数据库](#数据库)里的表之间的这种结构错位，称为**[对象-关系阻抗失配](#对象-关系阻抗失配)**（Object-Relational Impedance Mismatch）。文档模型的做法是让对象和[数据库](#数据库)紧密耦合，直接把对象存进去：[关联表](#关联表)不见了，GZA 的专辑作为数组嵌在他的文档里。\n\n应用代码中的类："
+  },
+  {
+   "chunk_id": 265,
+   "seq": 71,
+   "heading_path": "去重 > 8. 其他数据模型 > 8.1 文档数据模型（Document Data Model） (part 2)",
+   "page_start": 46,
+   "page_end": 47,
+   "char_count": 479,
+   "content": "mpedance Mismatch）。文档模型的做法是让对象和[数据库](#数据库)紧密耦合，直接把对象存进去：[关联表](#关联表)不见了，GZA 的专辑作为数组嵌在他的文档里。\n\n应用代码中的类：\n\n```java\nclass Artist {\n   int id;\n   String name;\n   int year;\n   Album albums[];\n}\nclass Album {\n  int id;\n  String name;\n  int year;\n}\n```\n\n存进[数据库](#数据库)的文档：\n\n```json\n{\n \"name\": \"GZA\",\n \"year\": 1990,\n \"albums\": [\n  {\n   \"name\": \"Liquid Swords\",\n   \"year\": 1995\n  },\n  {\n   \"name\": \"Beneath the Surface\",\n   \"year\": 1999\n  }\n ]\n}\n```\n\n读取 GZA 连同他的全部专辑，只需要读出一个文档，不需要任何[连接](#连接)。"
+  },
+  {
+   "chunk_id": 266,
+   "seq": 72,
+   "heading_path": "去重 > 8. 其他数据模型 > 8.1 文档数据模型（Document Data Model） (part 3)",
+   "page_start": 46,
+   "page_end": 47,
+   "char_count": 795,
+   "content": "ame\": \"Beneath the Surface\",\n   \"year\": 1999\n  }\n ]\n}\n```\n\n读取 GZA 连同他的全部专辑，只需要读出一个文档，不需要任何[连接](#连接)。\n\n文档模型有它的用武之地：“一位艺术家和他的专辑”这种一对多的树形数据，用它存取很顺手。麻烦出在多对多上，在这里它会重新遇到[平面文件](#平面文件)方案中讨论过的许多问题。St.Ides Mix Tape 有三位艺术家，按嵌入的方式，它要在 Wu-Tang Clan、Notorious BIG、GZA 三个文档里各存一份。要修改这张专辑的发行年份，就得找到并修改三处，漏改一处，数据就自相矛盾，这正是 2.2 节[平面文件](#平面文件)的完整性问题，也就是 Liquid Swords 年份前后不一的那种错误。反过来要查“St.Ides Mix Tape 上有哪些艺术家”，就得翻遍所有艺术家的文档。如果改为在文档里存放指向专辑文档的引用来避免重复，读取时又得由应用自己沿着引用去取，等于在应用层手写[连接](#连接)，回到了 4.1 节导航式访问的老路。\n\n这也是 1974 年那场辩论中 CODASYL 阵营第三条论点（应用需要面向单条记录的操作）的再现。文档模型绕开了[关系模型](#关系模型)的[连接](#连接)，却要重新面对[关系模型](#关系模型)当初要解决的那些问题。另一方面，如今主流的关系型 [DBMS](#数据库管理系统) 大多也支持 JSON 类型的列，可以在[关系模型](#关系模型)内部存放嵌套数据，这就是 5.3 节提到的“值可以是嵌套的数据结构”。对这段反复的历史感兴趣的读者，可以读 Stonebraker 与 Pavlo 在 2024 年发表的论文 *What Goes Around Comes Around... And Around...*。"
+  },
+  {
+   "chunk_id": 267,
+   "seq": 73,
+   "heading_path": "去重 > 8. 其他数据模型 > 8.2 向量数据模型（Vector Data Model）",
+   "page_start": 48,
+   "page_end": 50,
+   "char_count": 570,
+   "content": "**[向量数据模型](#向量数据模型)**用一维数组表示数据，用于精确或近似的**[最近邻搜索](#最近邻搜索)**（Nearest-Neighbor Search），即在大量向量中找出与给定向量距离最近的若干个。\n![PPT 第 48 页](slides/page-76.png)\n\n![PPT 第 48 页](slides/page-77.png)\n\n\n它的兴起与大语言模型有关。经过机器学习训练的 Transformer 模型（ChatGPT 背后就是这类模型）可以把一段文本转换成一个由几百到几千个浮点数组成的数组，称为**[嵌入向量](#嵌入向量)**（Embedding）。语义相近的文本，[嵌入向量](#嵌入向量)在空间中的距离也相近，于是“找意思相近的文本”变成了“找距离最近的向量”。在 C 里，一个[嵌入向量](#嵌入向量)不过是一个 `float` 数组。Pinecone、Weaviate、Milvus、Qdrant、Marqo、turbopuffer 等都属于这一类，它们的核心是用专门的索引快速完成[最近邻搜索](#最近邻搜索)。\n\n以专辑为例，给 Album 表加上歌词列：\n\n`Album(id, name, year, lyrics)`：\n![PPT 第 49 页](slides/page-78.png)"
+  },
+  {
+   "chunk_id": 268,
+   "seq": 74,
+   "heading_path": "去重 > 8. 其他数据模型 > 8.2 向量数据模型（Vector Data Model） (part 2)",
+   "page_start": 48,
+   "page_end": 50,
+   "char_count": 762,
+   "content": "(#最近邻搜索)。\n\n以专辑为例，给 Album 表加上歌词列：\n\n`Album(id, name, year, lyrics)`：\n![PPT 第 49 页](slides/page-78.png)\n\n\n| id | name | year | lyrics |\n|---|---|---|---|\n| Id1 | Enter the Wu-Tang | 1993 | `<text>` |\n| Id2 | Run the Jewels 2 | 2015 | `<text>` |\n| Id3 | Liquid Swords | 1995 | `<text>` |\n| Id4 | We Got It from Here | 2016 | `<text>` |\n\n数据和查询的流向如下：\n\n```mermaid\nflowchart LR\n    L[\"Album.lyrics<br/>歌词文本\"] --> T[\"Transformer 模型<br/>OpenAI、Hugging Face\"]\n    Q[\"查询：歌词关于<br/>逃避警察的专辑\"] --> T\n    T --> E[\"嵌入向量<br/>Id1 → [0.32, 0.78, 0.30, …]<br/>Id2 → [0.99, 0.19, 0.81, …]<br/>……\"]\n    E --> I[\"向量索引<br/>HNSW、IVFFlat<br/>Faiss、Annoy、DiskANN\"]\n    T -->|\"查询向量 [0.02, 0.10, 0.24, …]\"| I\n    Y[\"name、year 等普通属性<br/>过滤条件 year > 2005\"] --> I\n    I --> R[\"按相似度排序的 id 列表\"]\n```"
+  },
+  {
+   "chunk_id": 269,
+   "seq": 75,
+   "heading_path": "去重 > 8. 其他数据模型 > 8.2 向量数据模型（Vector Data Model） (part 3)",
+   "page_start": 48,
+   "page_end": 50,
+   "char_count": 511,
+   "content": "0, 0.24, …]\"| I\n    Y[\"name、year 等普通属性<br/>过滤条件 year > 2005\"] --> I\n    I --> R[\"按相似度排序的 id 列表\"]\n```\n\n每张专辑的歌词经过 Transformer 模型得到[嵌入向量](#嵌入向量)，比如 Id1 对应 [0.32, 0.78, 0.30, …]，这些向量被组织进向量索引。查询“歌词关于逃避警察的专辑”（running from the police）时，查询文本经过同一个模型变成向量 [0.02, 0.10, 0.24, …]，向量索引找出与它最近的若干个向量，返回按相似度排序的 id 列表。精确的[最近邻搜索](#最近邻搜索)要把查询向量与每一个向量逐一比较；向量索引牺牲少量准确性来换取速度，做的是近似搜索。常见的索引结构和库有 HNSW、IVFFlat，以及 Meta 的 Faiss、Spotify 的 Annoy、微软的 DiskANN，它们的原理超出了本讲的范围。\n![PPT 第 49 页](slides/page-80.png)\n\n![PPT 第 49 页](slides/page-81.png)"
+  },
+  {
+   "chunk_id": 270,
+   "seq": 76,
+   "heading_path": "去重 > 8. 其他数据模型 > 8.2 向量数据模型（Vector Data Model） (part 4)",
+   "page_start": 48,
+   "page_end": 50,
+   "char_count": 490,
+   "content": "nnoy、微软的 DiskANN，它们的原理超出了本讲的范围。\n![PPT 第 49 页](slides/page-80.png)\n\n![PPT 第 49 页](slides/page-81.png)\n\n\n真实的查询很少只有“语义相似”这一个条件。把查询改成“歌词关于逃避警察、并且在 2005 年之后发行的专辑”，向量索引就还要用到 `year` 这样的普通[属性](#属性)。按表中的数据，`year > 2005` 只留下 Run the Jewels 2（2015）和 We Got It from Here（2016）。于是一个老问题又回来了：先按 `year > 2005` 过滤，再在剩下的专辑里找最近邻，还是先找出最相似的若干张，再筛掉 2005 年以前的？后一种做法可能出现这样的情况：最相似的前两张恰好都是 2005 年以前的，筛完一张不剩，而符合条件的专辑其实存在。前一种做法在过滤后剩下的数据很少时最合适，剩下的数据很多时又要付出代价。这与 7.1 节[选择](#选择)和[连接](#连接)孰先孰后是同一个问题，最好的选择取决于数据，应当交给优化器来决定。"
+  },
+  {
+   "chunk_id": 271,
+   "seq": 77,
+   "heading_path": "去重 > 8. 其他数据模型 > 8.2 向量数据模型（Vector Data Model） (part 5)",
+   "page_start": 48,
+   "page_end": 50,
+   "char_count": 589,
+   "content": "实存在。前一种做法在过滤后剩下的数据很少时最合适，剩下的数据很多时又要付出代价。这与 7.1 节[选择](#选择)和[连接](#连接)孰先孰后是同一个问题，最好的选择取决于数据，应当交给优化器来决定。\n\n由此可以理解向量模型的定位：它并不是需要全新 [DBMS](#数据库管理系统) 架构的重大变化。[嵌入向量](#嵌入向量)不过是表中的又一列，向量索引不过是又一种索引；和其余数据放在同一个 [DBMS](#数据库管理系统) 里，恰好能让上面的过滤条件与相似度搜索一起优化。2023 年前后，ClickHouse、SingleStore、Rockset、DataStax、Neon、Timescale、Oracle 和 Google Cloud 纷纷推出了原生的向量检索支持，PostgreSQL 也有 pgvector 这样的扩展，如今每个主流 [DBMS](#数据库管理系统) 都提供向量索引。专门的向量数据库的长处，主要在于与 OpenAI、LangChain 等 AI 工具生态集成得更好。\n![PPT 第 49 页](slides/page-85.png)\n\n![PPT 第 50 页](slides/page-86.png)\n\n![PPT 第 50 页](slides/page-87.png)\n\n![PPT 第 50 页](slides/page-88.png)"
+  },
+  {
+   "chunk_id": 272,
+   "seq": 78,
+   "heading_path": "去重 > 小结",
+   "page_start": 48,
+   "page_end": 50,
+   "char_count": 463,
+   "content": "[平面文件](#平面文件)把数据的含义、访问方式和安全保证全部压在应用程序身上，完整性、实现和[持久性](#持久性)三方面都守不住，于是有了 [DBMS](#数据库管理系统) 和描述数据的[数据模型](#数据模型)。早期的导航式系统让程序员自己决定[访问路径](#访问路径)，查询与存储方式绑在一起。Codd 的[关系模型](#关系模型)用值而不是地址来表达联系，把“数据是什么”和“数据怎么存”分开，这就是[数据独立性](#数据独立性)；[关系](#关系)、[元组](#元组)、[主键](#主键)、[外键](#外键)和[约束](#约束)构成了描述数据的词汇，[关系代数](#关系代数)给出了在[关系](#关系)上计算的基本运算。[关系代数](#关系代数)隐含的求值顺序决定了代价，而最优顺序取决于随时间变化的数据，因此更好的做法是只声明要什么，让 [DBMS](#数据库管理系统) 决定怎么算。文档模型和向量模型并没有跳出这条线索：前者在多对多联系上重新遇到了完整性问题，后者一旦加上普通的过滤条件，就回到了求值顺序的问题。"
+  },
+  {
+   "chunk_id": 273,
+   "seq": 79,
+   "heading_path": "去重 > 小结 (part 2)",
+   "page_start": 48,
+   "page_end": 50,
+   "char_count": 800,
+   "content": "做法是只声明要什么，让 [DBMS](#数据库管理系统) 决定怎么算。文档模型和向量模型并没有跳出这条线索：前者在多对多联系上重新遇到了完整性问题，后者一旦加上普通的过滤条件，就回到了求值顺序的问题。\n\nAndy 认为，数据库是整个计算机科学中最重要、也最优美的软件。本讲的许多内容还会反复出现：[关系代数](#关系代数)定义了在关系数据库上处理查询的基本单元，它的运算符在第 [11](../L11%20Astra%20排序与聚合算法%20MotherDuck%20数据库讲座%20Sorting%20and%20Aggregation%20Algorithms%20MotherDuck%20Database%20Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md)、[12](../L12%20Astra%20哈希连接%20排序合并连接%20嵌套循环连接%20Hash%20Joins%20Sort%20Merge%20Joins%20Nested%20Loop%20Join%20Algorithms/15-445-lecture-12-joins-algorithms.md)、[13](../L13%20Opus%20查询执行%20上%20Query%20Execution%20Part%201/15-445-lecture-13-query-execution-i.md)、[14](../L14%20Opus%20并行查询引擎架构%20SpiralDB%20数据库讲座%20Parallel%20Query%20Engine%20Architectures%20SpiralDB%20Database%20Talk/15-445-lecture-14-query-execution-ii.md) 讲变成具体的"
+  },
+  {
+   "chunk_id": 274,
+   "seq": 80,
+   "heading_path": "去重 > 小结 (part 3)",
+   "page_start": 48,
+   "page_end": 50,
+   "char_count": 1259,
+   "content": "0Engine%20Architectures%20SpiralDB%20Database%20Talk/15-445-lecture-14-query-execution-ii.md) 讲变成具体的执行算法和执行引擎，求值顺序的选择在第 [15](../L15%20Opus%20查询优化器%20上%20Database%20Query%20Optimizers%20Part%201/15-445-lecture-15-query-planning-and-optimization-i.md)、[16](../L16%20Astra%20查询优化%20下%20Query%20Optimization%20Part%202/15-445-lecture-16-query-planning-and-optimization-ii.md) 讲由[查询优化](#查询优化)器完成；[平面文件](#平面文件)方案暴露的并发与故障问题，在第 [17](../L17%20Astra%20并发控制理论%20Concurrency%20Control%20Theory/15-445-lecture-17-concurrency-control-theory.md)、[18](../L18%20Astra%20两阶段封锁事务%20Firebolt%20数据库讲座%20Transactions%20with%20Two%20Phase%20Locking%20Firebolt%20Database%20Talk/15-445-lecture-18-two-phase-locking-concurrency-control.md)、[19](../L19%20Opus%20时间戳排序并发控制%20Timestamp%20Ordering%20Concurrency%20Control/15-445-lecture-19-timestamp-ordering-concurrency-control.md)、[20](../L20%20Opus%20多版本并发控制%20MVCC%20Multi%20Version%20Concurrency%20Control/15-445-lecture-20-multi-version-concurrency-control.md)、[21](../L21%20Opus%20预写日志与影子分页%20Write%20Ahead%20Logging%20and%20Shadow%20Paging/15-445-lecture-21-database-logging.md)、[22](../L22%20Astra%20数据库恢复%20ClickHouse%20数据库讲座%20Database%20Recovery%20ClickHouse%20Database%20Talk/15-445-lecture-22-database-recovery.md) 讲得到正面的回答。"
+  },
+  {
+   "chunk_id": 275,
+   "seq": 81,
+   "heading_path": "去重 > 小结 (part 4)",
+   "page_start": 48,
+   "page_end": 50,
+   "char_count": 146,
+   "content": "Database%20Recovery%20ClickHouse%20Database%20Talk/15-445-lecture-22-database-recovery.md) 讲得到正面的回答。\n\n下一讲是现代 SQL（Modern SQL），在那之前，最好先熟悉基本的 SQL 写法。"
+  }
+ ],
+ "glossary": [
+  {
+   "glossary_id": 1,
+   "term": "数据库",
+   "term_en": "Database",
+   "definition": "一组经过组织、相互关联、用来模拟现实世界某方面的数据。",
+   "first_seen": "1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 2,
+   "term": "数据库管理系统",
+   "term_en": "Database Management System (DBMS)",
+   "definition": "管理数据库的软件，负责数据的插入、删除和检索。",
+   "first_seen": "1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 3,
+   "term": "平面文件",
+   "term_en": "Flat File",
+   "definition": "每行一条记录、没有附加结构、由应用自己解析的文件。",
+   "first_seen": "2.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 4,
+   "term": "数据完整性",
+   "term_en": "Data Integrity",
+   "definition": "数据库内容与所描述的现实保持一致。",
+   "first_seen": "2.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 5,
+   "term": "页缓存",
+   "term_en": "OS Page Cache",
+   "definition": "操作系统在内存中缓存文件数据的区域，写入先到这里再落盘。",
+   "first_seen": "2.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 6,
+   "term": "持久性",
+   "term_en": "Durability",
+   "definition": "已写入的数据能在故障中保存下来。",
+   "first_seen": "2.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 7,
+   "term": "高可用",
+   "term_en": "High Availability",
+   "definition": "通过多机复制，使服务在部分机器故障时仍可用。",
+   "first_seen": "2.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 8,
+   "term": "通用 DBMS",
+   "term_en": "General-Purpose DBMS",
+   "definition": "支持按某种数据模型定义、创建、查询、更新、管理数据库的 DBMS。",
+   "first_seen": "3.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 9,
+   "term": "数据模型",
+   "term_en": "Data Model",
+   "definition": "描述数据的一组概念，规定可以有哪些东西及其联系。",
+   "first_seen": "3.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 10,
+   "term": "模式",
+   "term_en": "Schema",
+   "definition": "用某个数据模型对一批具体数据的描述，定义数据库的结构。",
+   "first_seen": "3.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 11,
+   "term": "实例",
+   "term_en": "Instance",
+   "definition": "数据库在某一时刻实际存放的数据。",
+   "first_seen": "3.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 12,
+   "term": "访问路径",
+   "term_en": "Access Path",
+   "definition": "找到所需记录的具体方式。",
+   "first_seen": "4.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 13,
+   "term": "联机事务处理",
+   "term_en": "Online Transaction Processing (OLTP)",
+   "definition": "频繁读写少量记录的应用，如转账、下单。",
+   "first_seen": "4.3",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 14,
+   "term": "关系模型",
+   "term_en": "Relational Model",
+   "definition": "以关系描述数据、以值表达联系、以声明式接口操纵数据的数据模型。",
+   "first_seen": "5.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 15,
+   "term": "数据独立性",
+   "term_en": "Data Independence",
+   "definition": "应用与底层数据表示相互隔离，一层改变不影响另一层。",
+   "first_seen": "5.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 16,
+   "term": "工作负载",
+   "term_en": "Workload",
+   "definition": "系统实际要处理的查询与更新的总体特征。",
+   "first_seen": "5.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 17,
+   "term": "物理模式",
+   "term_en": "Physical Schema",
+   "definition": "描述数据在页、文件、区中如何组织。",
+   "first_seen": "5.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 18,
+   "term": "逻辑模式",
+   "term_en": "Logical Schema",
+   "definition": "定义表、列、类型和约束。",
+   "first_seen": "5.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 19,
+   "term": "外模式",
+   "term_en": "External Schema",
+   "definition": "提供给某个应用看的那部分数据。",
+   "first_seen": "5.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 20,
+   "term": "视图",
+   "term_en": "View",
+   "definition": "用查询定义的虚拟表，用来实现外模式。",
+   "first_seen": "5.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 21,
+   "term": "物理数据独立性",
+   "term_en": "Physical Data Independence",
+   "definition": "改变物理存储方式而不影响逻辑模式。",
+   "first_seen": "5.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 22,
+   "term": "逻辑数据独立性",
+   "term_en": "Logical Data Independence",
+   "definition": "改变逻辑模式而不影响应用看到的外模式。",
+   "first_seen": "5.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 23,
+   "term": "关系",
+   "term_en": "Relation",
+   "definition": "一个无序集合，元素是描述实体的一组属性值。",
+   "first_seen": "5.3",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 24,
+   "term": "元组",
+   "term_en": "Tuple",
+   "definition": "关系中的一个元素，即表中的一行。",
+   "first_seen": "5.3",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 25,
+   "term": "属性",
+   "term_en": "Attribute",
+   "definition": "关系中的一个命名分量，即表中的一列。",
+   "first_seen": "5.3",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 26,
+   "term": "域",
+   "term_en": "Domain",
+   "definition": "一个属性允许取值的集合。",
+   "first_seen": "5.3",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 27,
+   "term": "NULL",
+   "term_en": "NULL",
+   "definition": "表示值未知或未定义的特殊值，与任何值比较的结果都是未知。",
+   "first_seen": "5.3",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 28,
+   "term": "主键",
+   "term_en": "Primary Key",
+   "definition": "唯一标识关系中一个元组的属性或属性组合。",
+   "first_seen": "5.4",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 29,
+   "term": "标识列",
+   "term_en": "Identity Column",
+   "definition": "由 DBMS 自动生成唯一递增值的列。",
+   "first_seen": "5.4",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 30,
+   "term": "自然键",
+   "term_en": "Natural Key",
+   "definition": "由现实中本来就有的属性充当的键。",
+   "first_seen": "5.4",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 31,
+   "term": "代理键",
+   "term_en": "Surrogate Key",
+   "definition": "专为标识而引入、没有业务含义的键。",
+   "first_seen": "5.4",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 32,
+   "term": "外键",
+   "term_en": "Foreign Key",
+   "definition": "值必须对应另一关系中某个元组（通常是其主键）的属性。",
+   "first_seen": "5.5",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 33,
+   "term": "关联表",
+   "term_en": "Junction Table",
+   "definition": "专门记录两个实体之间多对多联系的表。",
+   "first_seen": "5.5",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 34,
+   "term": "引用完整性",
+   "term_en": "Referential Integrity",
+   "definition": "外键引用的元组必须存在。",
+   "first_seen": "5.5",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 35,
+   "term": "数据定义语言",
+   "term_en": "Data Definition Language (DDL)",
+   "definition": "声明数据库结构的语言，如 `CREATE TABLE`。",
+   "first_seen": "5.5",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 36,
+   "term": "约束",
+   "term_en": "Constraint",
+   "definition": "数据库的任何实例都必须满足的用户定义条件。",
+   "first_seen": "5.6",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 37,
+   "term": "断言",
+   "term_en": "Assertion",
+   "definition": "以任意 SQL 查询为检查条件的全局约束。",
+   "first_seen": "5.6",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 38,
+   "term": "数据操纵语言",
+   "term_en": "Data Manipulation Language (DML)",
+   "definition": "DBMS 向应用暴露的存取数据的接口。",
+   "first_seen": "6.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 39,
+   "term": "过程式",
+   "term_en": "Procedural",
+   "definition": "规定怎样求结果。",
+   "first_seen": "6.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 40,
+   "term": "声明式",
+   "term_en": "Declarative",
+   "definition": "只说明要什么结果。",
+   "first_seen": "6.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 41,
+   "term": "包",
+   "term_en": "Bag",
+   "definition": "允许重复元素的集合，也称多重集。",
+   "first_seen": "6.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 42,
+   "term": "关系演算",
+   "term_en": "Relational Calculus",
+   "definition": "声明式的关系查询形式。",
+   "first_seen": "6.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 43,
+   "term": "关系代数",
+   "term_en": "Relational Algebra",
+   "definition": "在关系上检索和操纵元组的一组基本运算。",
+   "first_seen": "6.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 44,
+   "term": "封闭性",
+   "term_en": "Closure",
+   "definition": "运算符的输出仍是关系，因而可以串联。",
+   "first_seen": "6.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 45,
+   "term": "谓词",
+   "term_en": "Predicate",
+   "definition": "对每个元组得出真或假的条件。",
+   "first_seen": "6.3",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 46,
+   "term": "选择",
+   "term_en": "Select",
+   "definition": "选出满足谓词的元组，对应 SQL 的 `WHERE`。",
+   "first_seen": "6.3",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 47,
+   "term": "投影",
+   "term_en": "Projection",
+   "definition": "只保留、重排或计算指定属性，对应 SQL 的 `SELECT` 列表。",
+   "first_seen": "6.4",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 48,
+   "term": "并",
+   "term_en": "Union",
+   "definition": "保留在任一输入关系中出现过的元组并去重，要求两个关系属性相同。",
+   "first_seen": "6.5",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 49,
+   "term": "交",
+   "term_en": "Intersection",
+   "definition": "只保留两个输入关系中都出现的元组，要求两个关系属性相同。",
+   "first_seen": "6.5",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 50,
+   "term": "差",
+   "term_en": "Difference",
+   "definition": "只保留出现在第一个关系、但不出现在第二个关系中的元组，要求两个关系属性相同。",
+   "first_seen": "6.5",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 51,
+   "term": "笛卡尔积",
+   "term_en": "Product",
+   "definition": "两个关系中元组的所有组合。",
+   "first_seen": "6.6",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 52,
+   "term": "连接",
+   "term_en": "Join",
+   "definition": "在共同属性上取值相同的元组组合。",
+   "first_seen": "6.7",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 53,
+   "term": "自然连接",
+   "term_en": "Natural Join",
+   "definition": "按所有同名属性相等来连接并合并同名列。",
+   "first_seen": "6.7",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 54,
+   "term": "选择率",
+   "term_en": "Selectivity",
+   "definition": "满足条件的元组占全部元组的比例。",
+   "first_seen": "7.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 55,
+   "term": "查询优化",
+   "term_en": "Query Optimization",
+   "definition": "DBMS 为声明式查询找出最高效执行策略的过程。",
+   "first_seen": "7.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 56,
+   "term": "文档数据模型",
+   "term_en": "Document Data Model",
+   "definition": "以带层次结构的字段-值文档组织数据的模型。",
+   "first_seen": "8.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 57,
+   "term": "对象-关系阻抗失配",
+   "term_en": "Object-Relational Impedance Mismatch",
+   "definition": "程序中的对象与数据库中的表之间的结构错位。",
+   "first_seen": "8.1",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 58,
+   "term": "向量数据模型",
+   "term_en": "Vector Data Model",
+   "definition": "以一维数组表示数据、用于最近邻搜索的模型。",
+   "first_seen": "8.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 59,
+   "term": "最近邻搜索",
+   "term_en": "Nearest-Neighbor Search",
+   "definition": "找出与给定向量距离最近的若干个向量。",
+   "first_seen": "8.2",
+   "introduced_in": "本讲"
+  },
+  {
+   "glossary_id": 60,
+   "term": "嵌入向量",
+   "term_en": "Embedding",
+   "definition": "机器学习模型把文本等数据转换成的浮点数组。\n\n[^1]: 原话：“Just because you're using a DBMS doesn't mean the people building that have done that correctly.”\n\n[^2]: 原话：“I was an early critic of NoSQL systems, and it turns out we're right, because they're all adding the relational model now.”\n\n[^3]: 原话：“It's a terrible idea because, essentially, you as a programmer have to understand exactly how the data is being stored in the system and write code against that.”\n\n[^4]: 原话：“It seems obvious now, but back then this was like a mind-blowing idea.”\n\n[^5]: 原话：“I would recommend explicitly saying what the join condition should be.”\n\n![PPT 第 13 页](slides/page-15.png)\n\n![PPT 第 18 页](slides/page-20.png)\n\n![PPT 第 21 页](slides/page-24.png)\n\n![PPT 第 25 页](slides/page-35.png)\n\n![PPT 第 25 页](slides/page-36.png)\n\n![PPT 第 25 页](slides/page-39.png)\n\n![PPT 第 26 页](slides/page-41.png)\n\n![PPT 第 27 页](slides/page-42.png)\n\n![PPT 第 28 页](slides/page-43.png)\n\n![PPT 第 28 页](slides/page-44.png)\n\n![PPT 第 30 页](slides/page-46.png)\n\n![PPT 第 30 页](slides/page-47.png)\n\n![PPT 第 31 页](slides/page-49.png)\n\n![PPT 第 31 页](slides/page-51.png)\n\n![PPT 第 32 页](slides/page-52.png)\n\n![PPT 第 32 页](slides/page-53.png)\n\n![PPT 第 35 页](slides/page-56.png)\n\n![PPT 第 35 页](slides/page-57.png)\n\n![PPT 第 36 页](slides/page-58.png)\n\n![PPT 第 37 页](slides/page-59.png)\n\n![PPT 第 39 页](slides/page-62.png)\n\n![PPT 第 41 页](slides/page-64.png)\n\n![PPT 第 41 页](slides/page-65.png)\n\n![PPT 第 41 页](slides/page-66.png)\n\n![PPT 第 42 页](slides/page-67.png)\n\n![PPT 第 43 页](slides/page-68.png)\n\n![PPT 第 44 页](slides/page-69.png)\n\n![PPT 第 45 页](slides/page-70.png)\n\n![PPT 第 47 页](slides/page-73.png)\n\n![PPT 第 47 页](slides/page-74.png)\n\n![PPT 第 47 页](slides/page-75.png)\n\n![PPT 第 49 页](slides/page-79.png)\n\n![PPT 第 49 页](slides/page-82.png)\n\n![PPT 第 49 页](slides/page-83.png)\n\n![PPT 第 49 页](slides/page-84.png)\n\n![PPT 第 51 页](slides/page-89.png)\n\n![PPT 第 52 页](slides/page-90.png)",
+   "first_seen": "8.2",
+   "introduced_in": "本讲"
+  }
+ ],
+ "links_out": [
+  {
+   "link_id": 752,
+   "link_text": "2",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 199,
+   "dst_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）"
+  },
+  {
+   "link_id": 753,
+   "link_text": "3",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L3 Opus 数据库存储 文件 页 元组 Database Storage Files Pages Tuples/15-445-lecture-03-database-storage-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 199,
+   "dst_title": "CMU 15-445 第 03 讲：数据库存储（上）（Database Storage I）"
+  },
+  {
+   "link_id": 754,
+   "link_text": "4",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-memory-management.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 199,
+   "dst_title": "CMU 15-445 第 04 讲：内存管理（Memory Management）"
+  },
+  {
+   "link_id": 755,
+   "link_text": "5",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L5 Opus 日志结构存储 SingleStore 数据库讲座 Log Structured Database Storage SingleStore Database Talk/15-445-lecture-05-database-storage-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 199,
+   "dst_title": "CMU 15-445 第 05 讲：数据库存储（下）（Database Storage II）"
+  },
+  {
+   "link_id": 756,
+   "link_text": "6",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L6 Opus 列存数据库 Column Store Databases/15-445-lecture-06-storage-models-and-compression.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 199,
+   "dst_title": "CMU 15-445 第 06 讲：存储模型与压缩（Storage Models & Compression）"
+  },
+  {
+   "link_id": 757,
+   "link_text": "7",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L7 Opus 数据库哈希表 YugabyteDB 数据库讲座 Database Hash Tables YugabyteDB Database Talk/15-445-lecture-07-hash-tables.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 200,
+   "dst_title": "CMU 15-445 第 07 讲：哈希表（Hash Tables）"
+  },
+  {
+   "link_id": 758,
+   "link_text": "8",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L8 Astra B+树 世界上最好的数据结构 B+Trees The Best Data Structure in the World/15-445-lecture-08-indexes-and-filters-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 200,
+   "dst_title": "CMU 15-445 第 08 讲：索引与过滤器（上）（Indexes & Filters I）"
+  },
+  {
+   "link_id": 759,
+   "link_text": "9",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L9 Opus 向量索引 倒排索引 跳表 布隆过滤器 Vector Indexes Inverted Indexes Skip Lists Bloom Filters/15-445-lecture-09-indexes-and-filters-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 200,
+   "dst_title": "CMU 15-445 第 09 讲：索引与过滤器（下）（Indexes & Filters II）"
+  },
+  {
+   "link_id": 760,
+   "link_text": "10",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L10 Astra 数据结构中的闩锁 Latching in Data Structures/15-445-lecture-10-index-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 200,
+   "dst_title": "CMU 15-445 第 10 讲：索引并发控制（Index Concurrency Control）"
+  },
+  {
+   "link_id": 761,
+   "link_text": "11",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 201,
+   "dst_title": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms）"
+  },
+  {
+   "link_id": 762,
+   "link_text": "12",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 201,
+   "dst_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）"
+  },
+  {
+   "link_id": 763,
+   "link_text": "13",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 201,
+   "dst_title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）"
+  },
+  {
+   "link_id": 764,
+   "link_text": "14",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 201,
+   "dst_title": "CMU 15-445 第 14 讲：查询执行（下）（Query Execution II）"
+  },
+  {
+   "link_id": 765,
+   "link_text": "15",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 201,
+   "dst_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）"
+  },
+  {
+   "link_id": 766,
+   "link_text": "16",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-query-planning-and-optimization-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 202,
+   "dst_title": "CMU 15-445 第 16 讲：查询计划与优化（下）（Query Planning & Optimization II）"
+  },
+  {
+   "link_id": 767,
+   "link_text": "17",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L17 Astra 并发控制理论 Concurrency Control Theory/15-445-lecture-17-concurrency-control-theory.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 202,
+   "dst_title": "CMU 15-445 第 17 讲：并发控制理论（Concurrency Control Theory）"
+  },
+  {
+   "link_id": 768,
+   "link_text": "18",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L18 Astra 两阶段封锁事务 Firebolt 数据库讲座 Transactions with Two Phase Locking Firebolt Database Talk/15-445-lecture-18-two-phase-locking-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 202,
+   "dst_title": "CMU 15-445 第 18 讲：两阶段锁并发控制（Two-Phase Locking Concurrency Control）"
+  },
+  {
+   "link_id": 769,
+   "link_text": "19",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L19 Opus 时间戳排序并发控制 Timestamp Ordering Concurrency Control/15-445-lecture-19-timestamp-ordering-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 202,
+   "dst_title": "CMU 15-445 第 19 讲：时间戳排序并发控制（Timestamp Ordering Concurrency Control）"
+  },
+  {
+   "link_id": 770,
+   "link_text": "20",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L20 Opus 多版本并发控制 MVCC Multi Version Concurrency Control/15-445-lecture-20-multi-version-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 202,
+   "dst_title": "CMU 15-445 第 20 讲：多版本并发控制（Multi-Version Concurrency Control）"
+  },
+  {
+   "link_id": 771,
+   "link_text": "21",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L21 Opus 预写日志与影子分页 Write Ahead Logging and Shadow Paging/15-445-lecture-21-database-logging.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 202,
+   "dst_title": "CMU 15-445 第 21 讲：数据库日志（Database Logging）"
+  },
+  {
+   "link_id": 772,
+   "link_text": "22",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L22 Astra 数据库恢复 ClickHouse 数据库讲座 Database Recovery ClickHouse Database Talk/15-445-lecture-22-database-recovery.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 202,
+   "dst_title": "CMU 15-445 第 22 讲：数据库恢复（Database Recovery）"
+  },
+  {
+   "link_id": 773,
+   "link_text": "23",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L23 Opus 分布式数据库 上 Distributed Databases Pt 1/15-445-lecture-23-distributed-database-systems-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 202,
+   "dst_title": "CMU 15-445 第 23 讲：分布式数据库系统（上）（Distributed Database Systems I）"
+  },
+  {
+   "link_id": 774,
+   "link_text": "24",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L24 Opus 分布式数据库 下 Distributed Databases Pt 2/15-445-lecture-24-distributed-database-systems-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 202,
+   "dst_title": "CMU 15-445 第 24 讲：分布式数据库系统（下）（Distributed Database Systems II）"
+  },
+  {
+   "link_id": 775,
+   "link_text": "7",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L7 Opus 数据库哈希表 YugabyteDB 数据库讲座 Database Hash Tables YugabyteDB Database Talk/15-445-lecture-07-hash-tables.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 209,
+   "dst_title": "CMU 15-445 第 07 讲：哈希表（Hash Tables）"
+  },
+  {
+   "link_id": 776,
+   "link_text": "8",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L8 Astra B+树 世界上最好的数据结构 B+Trees The Best Data Structure in the World/15-445-lecture-08-indexes-and-filters-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 209,
+   "dst_title": "CMU 15-445 第 08 讲：索引与过滤器（上）（Indexes & Filters I）"
+  },
+  {
+   "link_id": 777,
+   "link_text": "9",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L9 Opus 向量索引 倒排索引 跳表 布隆过滤器 Vector Indexes Inverted Indexes Skip Lists Bloom Filters/15-445-lecture-09-indexes-and-filters-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 209,
+   "dst_title": "CMU 15-445 第 09 讲：索引与过滤器（下）（Indexes & Filters II）"
+  },
+  {
+   "link_id": 778,
+   "link_text": "10",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L10 Astra 数据结构中的闩锁 Latching in Data Structures/15-445-lecture-10-index-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 209,
+   "dst_title": "CMU 15-445 第 10 讲：索引并发控制（Index Concurrency Control）"
+  },
+  {
+   "link_id": 779,
+   "link_text": "17",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L17 Astra 并发控制理论 Concurrency Control Theory/15-445-lecture-17-concurrency-control-theory.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 210,
+   "dst_title": "CMU 15-445 第 17 讲：并发控制理论（Concurrency Control Theory）"
+  },
+  {
+   "link_id": 780,
+   "link_text": "18",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L18 Astra 两阶段封锁事务 Firebolt 数据库讲座 Transactions with Two Phase Locking Firebolt Database Talk/15-445-lecture-18-two-phase-locking-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 210,
+   "dst_title": "CMU 15-445 第 18 讲：两阶段锁并发控制（Two-Phase Locking Concurrency Control）"
+  },
+  {
+   "link_id": 781,
+   "link_text": "19",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L19 Opus 时间戳排序并发控制 Timestamp Ordering Concurrency Control/15-445-lecture-19-timestamp-ordering-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 210,
+   "dst_title": "CMU 15-445 第 19 讲：时间戳排序并发控制（Timestamp Ordering Concurrency Control）"
+  },
+  {
+   "link_id": 782,
+   "link_text": "20",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L20 Opus 多版本并发控制 MVCC Multi Version Concurrency Control/15-445-lecture-20-multi-version-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 210,
+   "dst_title": "CMU 15-445 第 20 讲：多版本并发控制（Multi-Version Concurrency Control）"
+  },
+  {
+   "link_id": 783,
+   "link_text": "21",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L21 Opus 预写日志与影子分页 Write Ahead Logging and Shadow Paging/15-445-lecture-21-database-logging.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 210,
+   "dst_title": "CMU 15-445 第 21 讲：数据库日志（Database Logging）"
+  },
+  {
+   "link_id": 784,
+   "link_text": "22",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L22 Astra 数据库恢复 ClickHouse 数据库讲座 Database Recovery ClickHouse Database Talk/15-445-lecture-22-database-recovery.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 210,
+   "dst_title": "CMU 15-445 第 22 讲：数据库恢复（Database Recovery）"
+  },
+  {
+   "link_id": 785,
+   "link_text": "23",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L23 Opus 分布式数据库 上 Distributed Databases Pt 1/15-445-lecture-23-distributed-database-systems-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 210,
+   "dst_title": "CMU 15-445 第 23 讲：分布式数据库系统（上）（Distributed Database Systems I）"
+  },
+  {
+   "link_id": 786,
+   "link_text": "24",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L24 Opus 分布式数据库 下 Distributed Databases Pt 2/15-445-lecture-24-distributed-database-systems-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 210,
+   "dst_title": "CMU 15-445 第 24 讲：分布式数据库系统（下）（Distributed Database Systems II）"
+  },
+  {
+   "link_id": 787,
+   "link_text": "15",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 224,
+   "dst_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）"
+  },
+  {
+   "link_id": 788,
+   "link_text": "16",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-query-planning-and-optimization-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 224,
+   "dst_title": "CMU 15-445 第 16 讲：查询计划与优化（下）（Query Planning & Optimization II）"
+  },
+  {
+   "link_id": 789,
+   "link_text": "3",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L3 Opus 数据库存储 文件 页 元组 Database Storage Files Pages Tuples/15-445-lecture-03-database-storage-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 229,
+   "dst_title": "CMU 15-445 第 03 讲：数据库存储（上）（Database Storage I）"
+  },
+  {
+   "link_id": 790,
+   "link_text": "4",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-memory-management.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 229,
+   "dst_title": "CMU 15-445 第 04 讲：内存管理（Memory Management）"
+  },
+  {
+   "link_id": 791,
+   "link_text": "6",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L6 Opus 列存数据库 Column Store Databases/15-445-lecture-06-storage-models-and-compression.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 230,
+   "dst_title": "CMU 15-445 第 06 讲：存储模型与压缩（Storage Models & Compression）"
+  },
+  {
+   "link_id": 792,
+   "link_text": "2",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 232,
+   "dst_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）"
+  },
+  {
+   "link_id": 793,
+   "link_text": "15",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 236,
+   "dst_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）"
+  },
+  {
+   "link_id": 794,
+   "link_text": "16",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-query-planning-and-optimization-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 236,
+   "dst_title": "CMU 15-445 第 16 讲：查询计划与优化（下）（Query Planning & Optimization II）"
+  },
+  {
+   "link_id": 795,
+   "link_text": "2",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 241,
+   "dst_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）"
+  },
+  {
+   "link_id": 796,
+   "link_text": "13",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 242,
+   "dst_title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）"
+  },
+  {
+   "link_id": 797,
+   "link_text": "14",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 242,
+   "dst_title": "CMU 15-445 第 14 讲：查询执行（下）（Query Execution II）"
+  },
+  {
+   "link_id": 798,
+   "link_text": "15",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 246,
+   "dst_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）"
+  },
+  {
+   "link_id": 799,
+   "link_text": "16",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-query-planning-and-optimization-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 246,
+   "dst_title": "CMU 15-445 第 16 讲：查询计划与优化（下）（Query Planning & Optimization II）"
+  },
+  {
+   "link_id": 800,
+   "link_text": "2",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 255,
+   "dst_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）"
+  },
+  {
+   "link_id": 801,
+   "link_text": "2",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 257,
+   "dst_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）"
+  },
+  {
+   "link_id": 802,
+   "link_text": "11",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 257,
+   "dst_title": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms）"
+  },
+  {
+   "link_id": 803,
+   "link_text": "12",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 259,
+   "dst_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）"
+  },
+  {
+   "link_id": 804,
+   "link_text": "8",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L8 Astra B+树 世界上最好的数据结构 B+Trees The Best Data Structure in the World/15-445-lecture-08-indexes-and-filters-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 259,
+   "dst_title": "CMU 15-445 第 08 讲：索引与过滤器（上）（Indexes & Filters I）"
+  },
+  {
+   "link_id": 805,
+   "link_text": "2",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 261,
+   "dst_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）"
+  },
+  {
+   "link_id": 806,
+   "link_text": "11",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 273,
+   "dst_title": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms）"
+  },
+  {
+   "link_id": 807,
+   "link_text": "12",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 273,
+   "dst_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）"
+  },
+  {
+   "link_id": 808,
+   "link_text": "13",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 273,
+   "dst_title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）"
+  },
+  {
+   "link_id": 809,
+   "link_text": "14",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 273,
+   "dst_title": "CMU 15-445 第 14 讲：查询执行（下）（Query Execution II）"
+  },
+  {
+   "link_id": 810,
+   "link_text": "15",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 274,
+   "dst_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）"
+  },
+  {
+   "link_id": 811,
+   "link_text": "16",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L16 Astra 查询优化 下 Query Optimization Part 2/15-445-lecture-16-query-planning-and-optimization-ii.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 274,
+   "dst_title": "CMU 15-445 第 16 讲：查询计划与优化（下）（Query Planning & Optimization II）"
+  },
+  {
+   "link_id": 812,
+   "link_text": "17",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L17 Astra 并发控制理论 Concurrency Control Theory/15-445-lecture-17-concurrency-control-theory.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 274,
+   "dst_title": "CMU 15-445 第 17 讲：并发控制理论（Concurrency Control Theory）"
+  },
+  {
+   "link_id": 813,
+   "link_text": "18",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L18 Astra 两阶段封锁事务 Firebolt 数据库讲座 Transactions with Two Phase Locking Firebolt Database Talk/15-445-lecture-18-two-phase-locking-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 274,
+   "dst_title": "CMU 15-445 第 18 讲：两阶段锁并发控制（Two-Phase Locking Concurrency Control）"
+  },
+  {
+   "link_id": 814,
+   "link_text": "19",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L19 Opus 时间戳排序并发控制 Timestamp Ordering Concurrency Control/15-445-lecture-19-timestamp-ordering-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 274,
+   "dst_title": "CMU 15-445 第 19 讲：时间戳排序并发控制（Timestamp Ordering Concurrency Control）"
+  },
+  {
+   "link_id": 815,
+   "link_text": "20",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L20 Opus 多版本并发控制 MVCC Multi Version Concurrency Control/15-445-lecture-20-multi-version-concurrency-control.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 274,
+   "dst_title": "CMU 15-445 第 20 讲：多版本并发控制（Multi-Version Concurrency Control）"
+  },
+  {
+   "link_id": 816,
+   "link_text": "21",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L21 Opus 预写日志与影子分页 Write Ahead Logging and Shadow Paging/15-445-lecture-21-database-logging.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 274,
+   "dst_title": "CMU 15-445 第 21 讲：数据库日志（Database Logging）"
+  },
+  {
+   "link_id": 817,
+   "link_text": "22",
+   "target_rel": "CMU/CMU15445_Final/Lectures/L22 Astra 数据库恢复 ClickHouse 数据库讲座 Database Recovery ClickHouse Database Talk/15-445-lecture-22-database-recovery.md",
+   "anchor": null,
+   "valid": 1,
+   "src_chunk_id": 274,
+   "dst_title": "CMU 15-445 第 22 讲：数据库恢复（Database Recovery）"
+  }
+ ],
+ "links_in": [
+  {
+   "link_id": 1,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 2,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 2,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 2,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 3,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 2,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 4,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 2,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 5,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 3,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 6,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 3,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 7,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 3,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 8,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 3,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 9,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 4,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 10,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 4,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 11,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 4,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 12,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 4,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 13,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 4,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 14,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 5,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 15,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 5,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 16,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 5,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 17,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 5,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 18,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 6,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 19,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 6,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 21,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 6,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 23,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 7,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 24,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 7,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 25,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 7,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 26,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 7,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 28,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 8,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 29,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 8,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 31,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 9,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 32,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 9,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 33,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 9,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 34,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 9,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 35,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 9,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 36,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 10,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 37,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 10,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 38,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 10,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 39,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 10,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 40,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 11,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 41,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 11,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 42,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 11,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 43,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 11,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 44,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 12,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 45,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 12,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 46,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 12,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 48,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 12,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 49,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 13,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 50,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 13,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 51,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 13,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 53,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 13,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 54,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 14,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 55,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 14,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 56,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 14,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 57,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 14,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 60,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 15,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 61,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 15,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 62,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 15,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 63,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 16,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 65,
+   "link_text": "#01",
+   "anchor": null,
+   "src_chunk_id": 16,
+   "src_title": "CMU 15-445 全课术语索引",
+   "src_path": "CMU/CMU15445_Final/Lectures/00-术语索引.md"
+  },
+  {
+   "link_id": 851,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 615,
+   "src_title": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md"
+  },
+  {
+   "link_id": 867,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 619,
+   "src_title": "CMU 15-445 第 11 讲：排序与聚合算法（Sorting & Aggregations Algorithms）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L11 Astra 排序与聚合算法 MotherDuck 数据库讲座 Sorting and Aggregation Algorithms MotherDuck Database Talk/15-445-lecture-11-sorting-and-aggregations-algorithms.md"
+  },
+  {
+   "link_id": 903,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 830,
+   "src_title": "CMU 15-445 第 12 讲：连接算法（Joins Algorithms）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L12 Astra 哈希连接 排序合并连接 嵌套循环连接 Hash Joins Sort Merge Joins Nested Loop Join Algorithms/15-445-lecture-12-joins-algorithms.md"
+  },
+  {
+   "link_id": 961,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 1069,
+   "src_title": "CMU 15-445 第 13 讲：查询执行（上）（Query Execution I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L13 Opus 查询执行 上 Query Execution Part 1/15-445-lecture-13-query-execution-i.md"
+  },
+  {
+   "link_id": 1004,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 1286,
+   "src_title": "CMU 15-445 第 14 讲：查询执行（下）（Query Execution II）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md"
+  },
+  {
+   "link_id": 1027,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 1342,
+   "src_title": "CMU 15-445 第 14 讲：查询执行（下）（Query Execution II）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L14 Opus 并行查询引擎架构 SpiralDB 数据库讲座 Parallel Query Engine Architectures SpiralDB Database Talk/15-445-lecture-14-query-execution-ii.md"
+  },
+  {
+   "link_id": 1040,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 1495,
+   "src_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md"
+  },
+  {
+   "link_id": 1041,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 1495,
+   "src_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md"
+  },
+  {
+   "link_id": 1053,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 1498,
+   "src_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md"
+  },
+  {
+   "link_id": 1054,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 1500,
+   "src_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md"
+  },
+  {
+   "link_id": 1066,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 1524,
+   "src_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md"
+  },
+  {
+   "link_id": 1069,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 1532,
+   "src_title": "CMU 15-445 第 15 讲：查询计划与优化（上）（Query Planning & Optimization I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L15 Opus 查询优化器 上 Database Query Optimizers Part 1/15-445-lecture-15-query-planning-and-optimization-i.md"
+  },
+  {
+   "link_id": 1221,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2480,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1222,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2483,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1223,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2483,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1224,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2483,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1225,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2483,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1226,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2483,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1235,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2485,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1236,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2492,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1237,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2492,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1239,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2493,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1241,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2493,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1242,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2495,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1246,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2498,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1247,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2498,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1249,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2519,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1253,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 2552,
+   "src_title": "CMU 15-445 第 02 讲：现代 SQL（Modern SQL）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L2 Opus 现代 SQL dbt 数据库讲座 Modern SQL dbt Database Talk/15-445-lecture-02-modern-sql.md"
+  },
+  {
+   "link_id": 1325,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 3007,
+   "src_title": "CMU 15-445 第 21 讲：数据库日志（Database Logging）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L21 Opus 预写日志与影子分页 Write Ahead Logging and Shadow Paging/15-445-lecture-21-database-logging.md"
+  },
+  {
+   "link_id": 1373,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 3400,
+   "src_title": "CMU 15-445 第 23 讲：分布式数据库系统（上）（Distributed Database Systems I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L23 Opus 分布式数据库 上 Distributed Databases Pt 1/15-445-lecture-23-distributed-database-systems-i.md"
+  },
+  {
+   "link_id": 1451,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 3868,
+   "src_title": "CMU 15-445 第 25 讲：期末复习与系统杂谈（Final Review + Systems Potpourri）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L25 Opus 高级数据库速览 RelationalAI 数据库讲座 Advanced Databases Speed Run RelationalAI Database Talk/15-445-lecture-25-final-review-and-systems-potpourri.md"
+  },
+  {
+   "link_id": 1453,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 3871,
+   "src_title": "CMU 15-445 第 25 讲：期末复习与系统杂谈（Final Review + Systems Potpourri）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L25 Opus 高级数据库速览 RelationalAI 数据库讲座 Advanced Databases Speed Run RelationalAI Database Talk/15-445-lecture-25-final-review-and-systems-potpourri.md"
+  },
+  {
+   "link_id": 1479,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 3897,
+   "src_title": "CMU 15-445 第 25 讲：期末复习与系统杂谈（Final Review + Systems Potpourri）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L25 Opus 高级数据库速览 RelationalAI 数据库讲座 Advanced Databases Speed Run RelationalAI Database Talk/15-445-lecture-25-final-review-and-systems-potpourri.md"
+  },
+  {
+   "link_id": 1503,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 3943,
+   "src_title": "CMU 15-445 第 25 讲：期末复习与系统杂谈（Final Review + Systems Potpourri）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L25 Opus 高级数据库速览 RelationalAI 数据库讲座 Advanced Databases Speed Run RelationalAI Database Talk/15-445-lecture-25-final-review-and-systems-potpourri.md"
+  },
+  {
+   "link_id": 1505,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 3953,
+   "src_title": "CMU 15-445 第 25 讲：期末复习与系统杂谈（Final Review + Systems Potpourri）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L25 Opus 高级数据库速览 RelationalAI 数据库讲座 Advanced Databases Speed Run RelationalAI Database Talk/15-445-lecture-25-final-review-and-systems-potpourri.md"
+  },
+  {
+   "link_id": 1506,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 4005,
+   "src_title": "CMU 15-445 第 03 讲：数据库存储（上）（Database Storage I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L3 Opus 数据库存储 文件 页 元组 Database Storage Files Pages Tuples/15-445-lecture-03-database-storage-i.md"
+  },
+  {
+   "link_id": 1531,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 4026,
+   "src_title": "CMU 15-445 第 03 讲：数据库存储（上）（Database Storage I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L3 Opus 数据库存储 文件 页 元组 Database Storage Files Pages Tuples/15-445-lecture-03-database-storage-i.md"
+  },
+  {
+   "link_id": 1535,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 4032,
+   "src_title": "CMU 15-445 第 03 讲：数据库存储（上）（Database Storage I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L3 Opus 数据库存储 文件 页 元组 Database Storage Files Pages Tuples/15-445-lecture-03-database-storage-i.md"
+  },
+  {
+   "link_id": 1545,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 4055,
+   "src_title": "CMU 15-445 第 03 讲：数据库存储（上）（Database Storage I）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L3 Opus 数据库存储 文件 页 元组 Database Storage Files Pages Tuples/15-445-lecture-03-database-storage-i.md"
+  },
+  {
+   "link_id": 1556,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 4246,
+   "src_title": "CMU 15-445 第 04 讲：内存管理（Memory Management）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-memory-management.md"
+  },
+  {
+   "link_id": 1598,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 4326,
+   "src_title": "CMU 15-445 第 04 讲：内存管理（Memory Management）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L4 Opus 内存管理与缓冲池 Memory Management and Buffer Pools/15-445-lecture-04-memory-management.md"
+  },
+  {
+   "link_id": 1682,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 4719,
+   "src_title": "CMU 15-445 第 06 讲：存储模型与压缩（Storage Models & Compression）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L6 Opus 列存数据库 Column Store Databases/15-445-lecture-06-storage-models-and-compression.md"
+  },
+  {
+   "link_id": 1735,
+   "link_text": "1",
+   "anchor": null,
+   "src_chunk_id": 5007,
+   "src_title": "CMU 15-445 第 07 讲：哈希表（Hash Tables）",
+   "src_path": "CMU/CMU15445_Final/Lectures/L7 Opus 数据库哈希表 YugabyteDB 数据库讲座 Database Hash Tables YugabyteDB Database Talk/15-445-lecture-07-hash-tables.md"
+  }
+ ]
+}
