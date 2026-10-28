@@ -59,9 +59,34 @@ def get(base, path):
         return json.loads(r.read().decode("utf-8"))
 
 
+# 隐私脱敏：写出快照前，把个人 handle / 个人文件名首字母替换为中性名。
+# 规则**放在本机、不进公开仓库**（否则公开代码里反而会出现要脱敏的 handle）：
+#   tools/sanitize_rules.local.json —— JSON 数组，每项 [原串, 替换串]，顺序敏感
+#   （先替换长短语，再兜底裸 token）。
+# 该文件缺失时不脱敏（例如别处克隆后重抓）；本机重抓请确保它存在。
+_RULES_PATH = Path(__file__).with_name("sanitize_rules.local.json")
+
+
+def _load_rules():
+    try:
+        return [tuple(x) for x in json.loads(_RULES_PATH.read_text(encoding="utf-8"))]
+    except Exception:
+        return []
+
+
+SANITIZE_RULES = _load_rules()
+
+
+def sanitize_text(s: str) -> str:
+    for a, b in SANITIZE_RULES:
+        s = s.replace(a, b)
+    return s
+
+
 def dump(path: Path, obj):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
+    text = sanitize_text(json.dumps(obj, ensure_ascii=False, indent=1))
+    path.write_text(text, encoding="utf-8")
     print(f"  wrote {path}  ({path.stat().st_size/1024:.1f} KB)")
 
 

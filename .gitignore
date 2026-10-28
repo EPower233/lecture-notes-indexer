@@ -12,6 +12,8 @@ venv/
 .env
 *.key
 *.pem
+# 本机隐私脱敏规则等本地配置（含个人 handle，切勿入公开仓库）
+*.local.json
 
 # 日志与临时文件
 logs/

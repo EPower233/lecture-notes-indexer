@@ -1,9 +1,9 @@
 {
  "note": {
   "note_id": 143,
-  "rel_path": "Mathematics/牢宇大观/CXY-00XProbabilityStatic.md",
-  "title": "CXY-00XProbabilityStatic",
-  "course": "Mathematics/牢宇大观",
+  "rel_path": "Mathematics/数学大观/00XProbabilityStatic.md",
+  "title": "00XProbabilityStatic",
+  "course": "Mathematics/数学大观",
   "course_code": null,
   "lecture_no": null,
   "kind": "other",
@@ -29,7 +29,7 @@
    "page_start": null,
    "page_end": null,
    "char_count": 53,
-   "content": ">  参考文献：\n> \t1. Kira 老师零基础概率论课程\n> \t2.牢宇概率论考前大串讲\n\n[TOC]"
+   "content": ">  参考文献：\n> \t1. 老师零基础概率论课程\n> \t2.概率论考前大串讲\n\n[TOC]"
   },
   {
    "chunk_id": 11974,
